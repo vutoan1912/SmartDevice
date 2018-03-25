@@ -34,6 +34,8 @@
             this.btnVTTP = new System.Windows.Forms.Button();
             this.btnXuatKhoThanhPham = new System.Windows.Forms.Button();
             this.btnProductOut = new System.Windows.Forms.Button();
+            this.btnNKHH = new System.Windows.Forms.Button();
+            this.btnInventoryAdjustment = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnNoiLinhKien
@@ -47,7 +49,7 @@
             // 
             // btnXuatKhoLinhKien
             // 
-            this.btnXuatKhoLinhKien.Location = new System.Drawing.Point(39, 62);
+            this.btnXuatKhoLinhKien.Location = new System.Drawing.Point(39, 54);
             this.btnXuatKhoLinhKien.Name = "btnXuatKhoLinhKien";
             this.btnXuatKhoLinhKien.Size = new System.Drawing.Size(166, 20);
             this.btnXuatKhoLinhKien.TabIndex = 1;
@@ -56,7 +58,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(38, 133);
+            this.button1.Location = new System.Drawing.Point(38, 112);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(167, 20);
             this.button1.TabIndex = 3;
@@ -65,7 +67,7 @@
             // 
             // btnVTTP
             // 
-            this.btnVTTP.Location = new System.Drawing.Point(39, 171);
+            this.btnVTTP.Location = new System.Drawing.Point(39, 141);
             this.btnVTTP.Name = "btnVTTP";
             this.btnVTTP.Size = new System.Drawing.Size(166, 20);
             this.btnVTTP.TabIndex = 4;
@@ -74,7 +76,7 @@
             // 
             // btnXuatKhoThanhPham
             // 
-            this.btnXuatKhoThanhPham.Location = new System.Drawing.Point(39, 98);
+            this.btnXuatKhoThanhPham.Location = new System.Drawing.Point(39, 83);
             this.btnXuatKhoThanhPham.Name = "btnXuatKhoThanhPham";
             this.btnXuatKhoThanhPham.Size = new System.Drawing.Size(166, 20);
             this.btnXuatKhoThanhPham.TabIndex = 5;
@@ -82,12 +84,30 @@
             // 
             // btnProductOut
             // 
-            this.btnProductOut.Location = new System.Drawing.Point(38, 207);
+            this.btnProductOut.Location = new System.Drawing.Point(38, 172);
             this.btnProductOut.Name = "btnProductOut";
             this.btnProductOut.Size = new System.Drawing.Size(166, 20);
             this.btnProductOut.TabIndex = 6;
             this.btnProductOut.Text = "Xuất Kho Hàng Hóa";
             this.btnProductOut.Click += new System.EventHandler(this.btnProductOut_Click);
+            // 
+            // btnNKHH
+            // 
+            this.btnNKHH.Location = new System.Drawing.Point(37, 201);
+            this.btnNKHH.Name = "btnNKHH";
+            this.btnNKHH.Size = new System.Drawing.Size(166, 20);
+            this.btnNKHH.TabIndex = 7;
+            this.btnNKHH.Text = "Nhập Kho Hàng Hóa";
+            this.btnNKHH.Click += new System.EventHandler(this.btnNKHH_Click);
+            // 
+            // btnInventoryAdjustment
+            // 
+            this.btnInventoryAdjustment.Location = new System.Drawing.Point(37, 231);
+            this.btnInventoryAdjustment.Name = "btnInventoryAdjustment";
+            this.btnInventoryAdjustment.Size = new System.Drawing.Size(166, 20);
+            this.btnInventoryAdjustment.TabIndex = 8;
+            this.btnInventoryAdjustment.Text = "Kiểm Kê Hàng Hóa";
+            this.btnInventoryAdjustment.Click += new System.EventHandler(this.btnInventoryAdjustment_Click);
             // 
             // Main
             // 
@@ -95,6 +115,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.AutoScroll = true;
             this.ClientSize = new System.Drawing.Size(240, 294);
+            this.Controls.Add(this.btnInventoryAdjustment);
+            this.Controls.Add(this.btnNKHH);
             this.Controls.Add(this.btnProductOut);
             this.Controls.Add(this.btnXuatKhoThanhPham);
             this.Controls.Add(this.btnVTTP);
@@ -116,5 +138,7 @@
         private System.Windows.Forms.Button btnVTTP;
         private System.Windows.Forms.Button btnXuatKhoThanhPham;
         private System.Windows.Forms.Button btnProductOut;
+        private System.Windows.Forms.Button btnNKHH;
+        private System.Windows.Forms.Button btnInventoryAdjustment;
     }
 }

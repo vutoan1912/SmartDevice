@@ -34,13 +34,12 @@
             this.btnSave = new System.Windows.Forms.Button();
             this.lblLocation = new System.Windows.Forms.Label();
             this.dgCuonList = new System.Windows.Forms.DataGrid();
-            this.label1 = new System.Windows.Forms.Label();
+            this.lblLocationBarcode = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // btnClear
             // 
             this.btnClear.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnClear.Enabled = false;
             this.btnClear.Location = new System.Drawing.Point(169, 27);
             this.btnClear.Name = "btnClear";
             this.btnClear.Size = new System.Drawing.Size(60, 20);
@@ -74,13 +73,13 @@
             this.dgCuonList.Size = new System.Drawing.Size(232, 217);
             this.dgCuonList.TabIndex = 15;
             this.dgCuonList.CurrentCellChanged += new System.EventHandler(this.dgCuonList_CurrentCellChanged);
+            this.dgCuonList.Click += new System.EventHandler(this.dgCuonList_Click);
             // 
-            // label1
+            // lblLocationBarcode
             // 
-            this.label1.Location = new System.Drawing.Point(4, 28);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(134, 21);
-            this.label1.Text = "Location";
+            this.lblLocationBarcode.Location = new System.Drawing.Point(4, 28);
+            this.lblLocationBarcode.Name = "lblLocationBarcode";
+            this.lblLocationBarcode.Size = new System.Drawing.Size(134, 21);
             // 
             // SetLocation
             // 
@@ -88,7 +87,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.AutoScroll = true;
             this.ClientSize = new System.Drawing.Size(240, 320);
-            this.Controls.Add(this.label1);
+            this.Controls.Add(this.lblLocationBarcode);
             this.Controls.Add(this.btnClear);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.lblLocation);
@@ -96,9 +95,10 @@
             this.Location = new System.Drawing.Point(0, 0);
             this.MinimizeBox = false;
             this.Name = "SetLocation";
-            this.Text = "TRANSFER OUT";
+            this.Text = "UPDATE LOCATION";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
-            this.Closing += new System.ComponentModel.CancelEventHandler(this.TansferOut_Closing);
+            this.Load += new System.EventHandler(this.SetLocation_Load);
+            this.Closing += new System.ComponentModel.CancelEventHandler(this.SetLocation_Closing);
             this.ResumeLayout(false);
 
         }
@@ -109,7 +109,7 @@
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Label lblLocation;
         private System.Windows.Forms.DataGrid dgCuonList;
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label lblLocationBarcode;
 
     }
 }

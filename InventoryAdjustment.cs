@@ -12,16 +12,13 @@ using Datalogic.API;
 
 namespace ERP
 {
-    public partial class TransferOut : Form
+    public partial class InventoryAdjustment : Form
     {
         private DecodeEvent dcdEvent;
         private DecodeHandle hDcd;
         
         private const string COL_SCANNED = "scanned";
-        private const string COL_PACKID = "pack_id";
-        private const string COL_ID = "id";
-        private const string COL_LOCATION = "destLocationName";
-
+        private const string COL_ID = "pack_id";
         private const string PREFIX_LOT = "LOT";
         private const string PREFIX_PACK = "PACK";
 
@@ -38,7 +35,7 @@ namespace ERP
 
         #endregion
 
-        public TransferOut()
+        public InventoryAdjustment()
         {
             InitializeComponent();
 
@@ -52,8 +49,8 @@ namespace ERP
             }
             catch { }
 
-            btnReset.Enabled = false;
             btnSave.Enabled = false;
+            btnScan.Enabled = false;
             dtList.Rows.Clear();
         }
 
@@ -68,11 +65,7 @@ namespace ERP
 
         private void btnReset_Click(object sender, EventArgs e)
         {
-            //TEST
-            //ScanCode("HQV/IN/00006-34");
-            //ScanCode("[)>@06@PPJV2VBSK000001UJ@3SLOT00028@@");
 
-            LoadData(_transferId);
         }
 
         private void LoadData(int _transferId)
@@ -106,9 +99,8 @@ namespace ERP
                     dtList = Util.ToDataTable<TransferDetail>(ListDetail);
 
                     
-                    dtList.Columns.Add(COL_PACKID);
+                    dtList.Columns.Add(COL_ID);
                     dtList.Columns.Add(COL_SCANNED);
-                    if (!dtList.Columns.Contains("level")) dtList.Columns.Add("level");
                     foreach (DataRow row in dtList.Rows)
                     {
                         if (Convert.ToDouble(row["doneQuantity"]) > 0)
@@ -117,11 +109,11 @@ namespace ERP
                         try
                         {
                             if (Convert.ToString(row["traceNumber"]).Length > 0)
-                                row[COL_PACKID] = row["traceNumber"];
+                                row[COL_ID] = row["traceNumber"];
                             else
-                                row[COL_PACKID] = row["destPackageNumber"];
+                                row[COL_ID] = row["destPackageNumber"];
                         }
-                        catch { row[COL_PACKID] = row["destPackageNumber"]; }
+                        catch { row[COL_ID] = row["destPackageNumber"]; }
                     }
 
                     dgCuonList.DataSource = dtList;
@@ -135,7 +127,7 @@ namespace ERP
 
                         switch (item.ColumnName)
                         {
-                            case COL_LOCATION:
+                            case "destLocationName":
                                 {
                                     tbcName.MappingName = item.ColumnName;
                                     tbcName.HeaderText = "Location";
@@ -147,7 +139,7 @@ namespace ERP
                                     tbcName.HeaderText = "Product";
                                     tbcName.Width = 75;
                                 } break;
-                            case COL_PACKID:
+                            case COL_ID:
                                 {
                                     tbcName.MappingName = item.ColumnName;
                                     tbcName.HeaderText = "Package";
@@ -183,7 +175,7 @@ namespace ERP
                     dgCuonList.TableStyles.Add(tableStyle);
 
                     dgCuonList.Refresh();
-                    btnReset.Enabled = true;
+                    btnSave.Enabled = true;
                 }
                 catch (Exception ex)
                 {
@@ -239,7 +231,7 @@ namespace ERP
                             _exists_product = true;
                         }
 
-                        rs_package = dtList.Select(COL_PACKID + " = '" + labelPackage.PackageId + "'");
+                        rs_package = dtList.Select(COL_ID + " = '" + labelPackage.PackageId + "'");
                         if (rs_package.Length > 0)
                         {
                             _exists_package = true;
@@ -251,7 +243,7 @@ namespace ERP
                             mgb = MessageBox.Show("Product not exists in list !", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
                             if (mgb == DialogResult.Yes)
                             {
-                                dr = dtList.Select("internalReference = '" + labelPackage.ProductName + "' AND " + COL_PACKID + " = '" + labelPackage.PackageId + "'").FirstOrDefault();
+                                dr = dtList.Select("internalReference = '" + labelPackage.ProductName + "' AND " + COL_ID + " = '" + labelPackage.PackageId + "'").FirstOrDefault();
                                 if (dr == null)
                                     addPackageNotInList(labelPackage.ProductName, labelPackage.PackageId);
                             }
@@ -261,16 +253,16 @@ namespace ERP
                             mgb = MessageBox.Show("Package not exists in list !", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
                             if (mgb == DialogResult.Yes)
                             {
-                                dr = dtList.Select("internalReference = '" + labelPackage.ProductName + "' AND " + COL_PACKID + " = '" + labelPackage.PackageId + "'").FirstOrDefault();
+                                dr = dtList.Select("internalReference = '" + labelPackage.ProductName + "' AND " + COL_ID + " = '" + labelPackage.PackageId + "'").FirstOrDefault();
                                 if(dr == null)
                                     addPackageNotInList(labelPackage.ProductName, labelPackage.PackageId);
                             }
                         }
                         else
                         {
-                            //dr = dtList.Select("internalReference = '" + labelPackage.ProductName + "' AND " + COL_PACKID + " = '" + labelPackage.PackageId + "'").FirstOrDefault();
-                            dr = dtList.Select(COL_PACKID + " = '" + labelPackage.PackageId + "'").FirstOrDefault();
-                            
+                            //dr = dtList.Select("internalReference = '" + labelPackage.ProductName + "' AND " + COL_ID + " = '" + labelPackage.PackageId + "'").FirstOrDefault();
+                            dr = dtList.Select(COL_ID + " = '" + labelPackage.PackageId + "'").FirstOrDefault();
+
                             //check duplicate scan
                             //TransferDetail packDuplicate = this.listScanned.SingleOrDefault(entry => entry.id_cuon == temCuon.IdCuon);
                             //if (packDuplicate != null)
@@ -281,32 +273,22 @@ namespace ERP
 
                             if (dr != null)
                             {
-                                if (Convert.ToInt32(dr[COL_ID]) > 0)
-                                {
-                                    dr["doneQuantity"] = dr["reserved"];
-                                    dr[COL_SCANNED] = "X";
-                                }
-                                
-                                int index = dtList.Rows.IndexOf(dr);
-                                this.dgCuonList.CurrentRowIndex = index;
+                                dr["doneQuantity"] = dr["reserved"];
+                                dr[COL_SCANNED] = "X";
                             }
                         }
 
                         //enable button save
-                        btnSave.Enabled = true;
+                        btnScan.Enabled = true;
                     }
                     else
                         MessageBox.Show("Error scan!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
                     #endregion
                 }
-                else if (Util.OnlyHexInString(dcdData.Trim()))
-                { 
-
-                }
                 else
                 {
                     #region scan transfer
-                    btnReset.Enabled = false;
+                    btnSave.Enabled = false;
                     //dtList.Rows.Clear();
 
                     try
@@ -364,16 +346,15 @@ namespace ERP
                         else
                         {
                             txtTransferNumber.Focus();
-                        }
+                        }                        
                     }
-                    catch (Exception ex)
-                    {
+                    catch (Exception ex) {
                         txtTransferNumber.Text = null;
-                        btnReset.Enabled = false;
+                        btnSave.Enabled = false;
                         //listScanned.Clear();
                         dtList.Rows.Clear();
                         _transferId = 0;
-                        MessageBox.Show("Transfer number wrong format !");
+                        MessageBox.Show("Transfer number wrong format !"); 
                     }
                     #endregion
                 }
@@ -393,32 +374,32 @@ namespace ERP
             try
             {
                 string url = "transfers/" + _transferId.ToString();
- 
+
                 //transfer info
                 string para_transfer = "{";
                 para_transfer += "\"id\": " + _transferId + ", ";
-                if (TransferInfo.created != null) para_transfer += "\"created\": " + TransferInfo.created.ToString() + ", ";
-                if (TransferInfo.updated != null) para_transfer += "\"updated\": " + TransferInfo.updated.ToString() + ", ";
-                if (TransferInfo.createdBy != null) para_transfer += "\"createdBy\": \"" + TransferInfo.createdBy + "\", ";
-                if (TransferInfo.transferNumber != null) para_transfer += "\"transferNumber\": \"" + TransferInfo.transferNumber + "\", ";
-                if (TransferInfo.originTransferNumber != null) para_transfer += "\"originTransferNumber\": \"" + TransferInfo.originTransferNumber + "\", ";
-                if (TransferInfo.operationTypeId != null) para_transfer += "\"operationTypeId\": " + TransferInfo.operationTypeId.ToString() + ", ";
-                if (TransferInfo.srcLocationId != null) para_transfer += "\"srcLocationId\": " + TransferInfo.srcLocationId.ToString() + ", ";
-                if (TransferInfo.destLocationId != null) para_transfer += "\"destLocationId\": " + TransferInfo.destLocationId.ToString() + ", ";
-                if (TransferInfo.scheduledDate != null) para_transfer += "\"scheduledDate\": " + TransferInfo.scheduledDate.ToString() + ", ";
-                if (TransferInfo.state != null) para_transfer += "\"state\": \"" + TransferInfo.state + "\", ";
-                if (TransferInfo.productVersionId != null) para_transfer += "\"productVersionId\": " + TransferInfo.productVersionId.ToString() + ", ";
-                if (TransferInfo.sourceDocument != null) para_transfer += "\"sourceDocument\": \"" + TransferInfo.sourceDocument + "\", ";
-                if (TransferInfo.priority != null) para_transfer += "\"priority\": \"" + TransferInfo.priority + "\", ";
-                if (TransferInfo.currentDemand != null) para_transfer += "\"currentDemand\": " + TransferInfo.currentDemand.ToString() + ", ";
-                if (TransferInfo.productionQuantity != null) para_transfer += "\"productionQuantity\": " + TransferInfo.productionQuantity.ToString() + ", ";
-                if (TransferInfo.capacity != null) para_transfer += "\"capacity\": " + TransferInfo.capacity.ToString() + ", ";
+                para_transfer += "\"created\": " + TransferInfo.created + ", ";
+                para_transfer += "\"updated\": " + TransferInfo.updated + ", ";
+                para_transfer += "\"createdBy\": \"" + TransferInfo.createdBy + "\", ";
+                para_transfer += "\"transferNumber\": \"" + TransferInfo.transferNumber + "\", ";
+                para_transfer += "\"originTransferNumber\": \"" + TransferInfo.originTransferNumber + "\", ";
+                para_transfer += "\"operationTypeId\": " + TransferInfo.operationTypeId + ", ";
+                para_transfer += "\"srcLocationId\": " + TransferInfo.srcLocationId + ", ";
+                para_transfer += "\"destLocationId\": " + TransferInfo.destLocationId + ", ";
+                para_transfer += "\"scheduledDate\": " + TransferInfo.scheduledDate + ", ";
+                para_transfer += "\"state\": \"" + TransferInfo.state + "\", ";
+                para_transfer += "\"productVersionId\": " + TransferInfo.productVersionId + ", ";
+                para_transfer += "\"sourceDocument\": \"" + TransferInfo.sourceDocument + "\", ";
+                para_transfer += "\"priority\": \"" + TransferInfo.priority + "\", ";
+                para_transfer += "\"currentDemand\": " + TransferInfo.currentDemand + ", ";
+                para_transfer += "\"productionQuantity\": " + TransferInfo.productionQuantity + ", ";
+                para_transfer += "\"capacity\": " + TransferInfo.capacity + ", ";
 
                 //transfer details
                 para_transfer += "\"transferDetails\": [ ";
                 foreach (DataRow row in dtList.Rows)
                 {
-                    if (row[COL_SCANNED] == "X" || row[COL_SCANNED] == "N")
+                    if (row[COL_SCANNED] == "X")
                     {
                         para_transfer += "{ ";
                         if (row["destLocationId"] != null && Convert.ToString(row["destLocationId"]).Length > 0) para_transfer += "\"destLocationId\": " + row["destLocationId"] + ", ";
@@ -437,7 +418,7 @@ namespace ERP
                         if (row["reference"] != null && Convert.ToString(row["reference"]).Length > 0) para_transfer += "\"reference\": \"" + row["reference"] + "\", ";
                         if (row["level"] != null && Convert.ToString(row["level"]).Length > 0) para_transfer += "\"level\": \"" + row["level"] + "\", ";
                         if (row["created"] != null && Convert.ToString(row["created"]).Length > 0) para_transfer += "\"created\": " + row["created"] + ", ";
-                        if (row["createdBy"] != null && Convert.ToString(row["createdBy"]).Length > 0) para_transfer += "\"createdBy\": \"" + row["createdBy"] + "\", ";
+                        if (row["createdBy"] != null && Convert.ToString(row["createdBy"]).Length > 0) para_transfer += "\"createdBy\": \"" + row["createdBy"] + "\" ";
                         if (row["internalReference"] != null && Convert.ToString(row["internalReference"]).Length > 0) para_transfer += "\"internalReference\": \"" + row["internalReference"] + "\" ";
                         para_transfer += "}, ";
                     }
@@ -446,34 +427,26 @@ namespace ERP
                 if (end_char == ",") para_transfer = para_transfer.Substring(0, para_transfer.Length - 2);
                 para_transfer += " ] }";
 
-                para_transfer = para_transfer.Replace(System.Environment.NewLine, "").Trim();
-
-                //Util.Logs(para_transfer);
-
                 res = HTTP.Put(url, para_transfer);
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error during allocate !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
-                Util.Logs(ex.ToString());
             }
 
             if (res.Status)
             {
-                MessageBox.Show("Export Success !");
+
             }
             else
             {
                 //MessageBox.Show(res.RawText);
             }
 
-            btnSave.Enabled = false;
-            btnReset.Enabled = true;
-            this.dtList.Rows.Clear();
-            this.dgCuonList.Refresh();
-            _transferId = 0;
-            this.txtTransferNumber.Text = null;
+            btnScan.Enabled = false;
 
+            //refresh data
+            LoadData(_transferId);
         }
 
         private void dgCuonList_CurrentCellChanged(object sender, EventArgs e)
@@ -543,24 +516,17 @@ namespace ERP
         {
             try
             {
-                DataColumnCollection columns = dtList.Columns;
-                if (!columns.Contains(COL_LOCATION)) dtList.Columns.Add(COL_LOCATION);
-
                 DataRow dr = this.dtList.NewRow();
-                dr[COL_ID] = -1;
-                dr[COL_LOCATION] = null;
-                dr[COL_PACKID] = _packageId;
+                dr[COL_ID] = _packageId;
                 if(_packageId.StartsWith(PREFIX_LOT))
                     dr["traceNumber"] = _packageId;
                 else
                     dr["destPackageNumber"] = _packageId;
                 dr["internalReference"] = _productName;
-                dr[COL_SCANNED] = "N";
+                dr[COL_SCANNED] = "X";
                 this.dtList.Rows.Add(dr);
                 this.dgCuonList.DataSource = this.dtList;
                 this.dgCuonList.Refresh();
-
-                this.dgCuonList.CurrentRowIndex = this.dtList.Rows.Count-1;
             }
             catch(Exception ex)
             {
@@ -570,30 +536,13 @@ namespace ERP
 
         private void dgCuonList_Click(object sender, EventArgs e)
         {
-            try
+            //dgCuonList.Select(dgCuonList.CurrentRowIndex);
+            DataGridCell row = dgCuonList.CurrentCell;
+            if (row.ColumnNumber == 3)
             {
-                int index_column_scan = 0;
-                foreach (DataColumn item in dtList.Columns)
-                {
-                    if (item.ColumnName == COL_SCANNED)
-                    {
-                        break;
-                    }
-                    index_column_scan++;
-                }
-
-                //MessageBox.Show(index_column_scan.ToString());
-
-
-                DataGridCell row = dgCuonList.CurrentCell;
-                //MessageBox.Show(row.ColumnNumber.ToString());
-                if (row.ColumnNumber == index_column_scan)
-                {
-                    dtList.Rows[row.RowNumber][COL_SCANNED] = "";
-                    dgCuonList.Refresh();
-                }
+                dtList.Rows[row.RowNumber][COL_SCANNED] = "";
+                dgCuonList.Refresh();
             }
-            catch { }
         }
     }
 

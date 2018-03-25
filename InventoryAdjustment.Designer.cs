@@ -1,6 +1,6 @@
 ﻿namespace ERP
 {
-    partial class TransferOut
+    partial class InventoryAdjustment
     {
         /// <summary>
         /// Required designer variable.
@@ -30,33 +30,33 @@
         private void InitializeComponent()
         {
             this.mainMenu1 = new System.Windows.Forms.MainMenu();
-            this.btnReset = new System.Windows.Forms.Button();
             this.btnSave = new System.Windows.Forms.Button();
+            this.btnScan = new System.Windows.Forms.Button();
             this.txtTransferNumber = new System.Windows.Forms.TextBox();
             this.lblTransferNumber = new System.Windows.Forms.Label();
             this.dgCuonList = new System.Windows.Forms.DataGrid();
             this.SuspendLayout();
             // 
-            // btnReset
-            // 
-            this.btnReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnReset.Location = new System.Drawing.Point(169, 27);
-            this.btnReset.Name = "btnReset";
-            this.btnReset.Size = new System.Drawing.Size(60, 20);
-            this.btnReset.TabIndex = 16;
-            this.btnReset.Text = "Reset";
-            this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
-            // 
             // btnSave
             // 
             this.btnSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSave.Enabled = false;
-            this.btnSave.Location = new System.Drawing.Point(169, 4);
+            this.btnSave.Location = new System.Drawing.Point(169, 27);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(60, 20);
-            this.btnSave.TabIndex = 17;
+            this.btnSave.TabIndex = 16;
             this.btnSave.Text = "Save";
-            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            // 
+            // btnScan
+            // 
+            this.btnScan.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnScan.Enabled = false;
+            this.btnScan.Location = new System.Drawing.Point(169, 4);
+            this.btnScan.Name = "btnScan";
+            this.btnScan.Size = new System.Drawing.Size(60, 20);
+            this.btnScan.TabIndex = 17;
+            this.btnScan.Text = "Scan";
+            this.btnScan.Click += new System.EventHandler(this.btnSave_Click);
             // 
             // txtTransferNumber
             // 
@@ -71,7 +71,7 @@
             this.lblTransferNumber.Location = new System.Drawing.Point(3, 6);
             this.lblTransferNumber.Name = "lblTransferNumber";
             this.lblTransferNumber.Size = new System.Drawing.Size(134, 21);
-            this.lblTransferNumber.Text = "TRANSFER NUMBER";
+            this.lblTransferNumber.Text = "Inventory Name";
             // 
             // dgCuonList
             // 
@@ -83,20 +83,20 @@
             this.dgCuonList.CurrentCellChanged += new System.EventHandler(this.dgCuonList_CurrentCellChanged);
             this.dgCuonList.Click += new System.EventHandler(this.dgCuonList_Click);
             // 
-            // TransferOut
+            // InventoryAdjustment
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.AutoScroll = true;
             this.ClientSize = new System.Drawing.Size(240, 320);
-            this.Controls.Add(this.btnReset);
             this.Controls.Add(this.btnSave);
+            this.Controls.Add(this.btnScan);
             this.Controls.Add(this.txtTransferNumber);
             this.Controls.Add(this.lblTransferNumber);
             this.Controls.Add(this.dgCuonList);
             this.Location = new System.Drawing.Point(0, 0);
             this.MinimizeBox = false;
-            this.Name = "TransferOut";
+            this.Name = "InventoryAdjustment";
             this.Text = "TRANSFER OUT";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Closing += new System.ComponentModel.CancelEventHandler(this.TansferOut_Closing);
@@ -106,8 +106,8 @@
 
         #endregion
 
-        private System.Windows.Forms.Button btnReset;
         private System.Windows.Forms.Button btnSave;
+        private System.Windows.Forms.Button btnScan;
         private System.Windows.Forms.TextBox txtTransferNumber;
         private System.Windows.Forms.Label lblTransferNumber;
         private System.Windows.Forms.DataGrid dgCuonList;

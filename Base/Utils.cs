@@ -6,6 +6,7 @@ using System.Data;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.IO;
 
 namespace ERP
 {
@@ -82,6 +83,32 @@ namespace ERP
         public static object ReflectPropertyValue(object source, string property)
         {
             return source.GetType().GetProperty(property).GetValue(source, null);
+        }
+
+        public static void Logs(string text)
+        {
+            try
+            {
+                string Path = "Logs.txt";
+                StreamWriter sw = new StreamWriter(Path);
+
+                sw.WriteLine(text);
+                sw.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception: " + ex.Message);
+            }
+            finally
+            {
+                Console.WriteLine("Executing finally block.");
+            }
+        }
+
+        public static bool OnlyHexInString(string text)
+        {
+            // For C-style hex notation (0xFF) you can use @"\A\b(0[xX])?[0-9a-fA-F]+\b\Z"
+            return System.Text.RegularExpressions.Regex.IsMatch(text, @"\A\b[0-9a-fA-F]+\b\Z");
         }
     }
 }

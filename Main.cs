@@ -137,5 +137,16 @@ namespace ERP
             }
         }
 
+        private void btnNKHH_Click(object sender, EventArgs e)
+        {
+            SetLocation frmSetLocation = new SetLocation();
+            frmSetLocation.ShowDialog();
+        }
+
+        private void btnInventoryAdjustment_Click(object sender, EventArgs e)
+        {
+
+        }
+
     }
 }
