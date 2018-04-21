@@ -66,7 +66,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Base\Config.cs" />
+    <Compile Include="Base\ErpObjects\Adjustment.cs" />
     <Compile Include="Base\ErpObjects\KhoItem.cs" />
+    <Compile Include="Base\ErpObjects\Location.cs" />
+    <Compile Include="Base\ErpObjects\Packages.cs" />
     <Compile Include="Base\ErpObjects\TemCuon.cs" />
     <Compile Include="Base\ErpObjects\TemThungThanhPham.cs" />
     <Compile Include="Base\ErpObjects\TemVitri.cs" />
@@ -89,6 +92,18 @@
     </Compile>
     <Compile Include="CapNhatViTriThanhPham.Designer.cs">
       <DependentUpon>CapNhatViTriThanhPham.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Components\TextEditable.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Components\TextEditable.Designer.cs">
+      <DependentUpon>TextEditable.cs</DependentUpon>
+    </Compile>
+    <Compile Include="InventoryAdjustmentScan.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InventoryAdjustmentScan.Designer.cs">
+      <DependentUpon>InventoryAdjustmentScan.cs</DependentUpon>
     </Compile>
     <Compile Include="InventoryAdjustment.cs">
       <SubType>Form</SubType>
@@ -132,6 +147,14 @@
     </EmbeddedResource>
     <EmbeddedResource Include="CapNhatViTriThanhPham.resx">
       <DependentUpon>CapNhatViTriThanhPham.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Components\TextEditable.resx">
+      <DependentUpon>TextEditable.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InventoryAdjustmentScan.resx">
+      <DependentUpon>InventoryAdjustmentScan.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="InventoryAdjustment.resx">

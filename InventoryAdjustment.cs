@@ -16,20 +16,27 @@ namespace ERP
     {
         private DecodeEvent dcdEvent;
         private DecodeHandle hDcd;
-        
-        private const string COL_SCANNED = "scanned";
-        private const string COL_ID = "pack_id";
+
+        //private const string COL_CANCEL = "cancel";
+        private const string COL_QUANT = "realQuantity";
         private const string PREFIX_LOT = "LOT";
         private const string PREFIX_PACK = "PACK";
 
-        private int _sl_thung_quet = 0;
-        private int _sl_cuon_quet = 0;
-
-        private int _transferId = 0;
-        private TransferInfo TransferInfo;
+        private int _adjustmentId = 0;
+        private Adjustment _Adjustment;
 
         private DataTable dtList = new DataTable();
-        //private List<TransferDetail> listScanned = new List<TransferDetail>();
+        private List<AdjustmentInput> ListDetail = new List<AdjustmentInput>();
+
+        private const string INVENTORY_OF_ALL = "all_product";
+        private const string INVENTORY_OF_CATEGORY = "one_product_category";
+        //private const string INVENTORY_OF_PRODUCT = "one_product_only";
+        private const string INVENTORY_OF_PRODUCT_MANUALLY = "select_products_manually";
+        private const string INVENTORY_OF_LOT = "one_lot_number";
+        private const string INVENTORY_OF_PACKAGE = "one_package_number";
+        //private const string INVENTORY_OF_RANDOM_SAMPLE = "random_sample";
+
+        private List<AdjustmentDetail> ListSpace = new List<AdjustmentDetail>();
 
         #region Properties
 
@@ -49,7 +56,6 @@ namespace ERP
             }
             catch { }
 
-            btnSave.Enabled = false;
             btnScan.Enabled = false;
             dtList.Rows.Clear();
         }
@@ -63,12 +69,52 @@ namespace ERP
             ScanCode(dcdData);
         }
 
-        private void btnReset_Click(object sender, EventArgs e)
+        private void LoadData(Adjustment Adjustment)
         {
-
+            switch (Adjustment.inventoryOf)
+            {
+                case INVENTORY_OF_CATEGORY:
+                    {
+                        this.lblHiddenField.Visible = true;
+                        this.lblHiddenFieldValue.Visible = true;
+                        this.dgCuonList.Visible = false;
+                        this.lblHiddenField.Text = "Category name:";
+                        this.lblHiddenFieldValue.Text = Adjustment.categoryName;
+                    } break;
+                case INVENTORY_OF_PRODUCT_MANUALLY:
+                    {
+                        this.lblHiddenField.Visible = false;
+                        this.lblHiddenFieldValue.Visible = false;
+                        this.dgCuonList.Visible = true;
+                        loadProductsManually(Adjustment.id);
+                    } break;
+                case INVENTORY_OF_LOT:
+                    {
+                        this.lblHiddenField.Visible = true;
+                        this.lblHiddenFieldValue.Visible = true;
+                        this.dgCuonList.Visible = false;
+                        this.lblHiddenField.Text = "Trace number:";
+                        this.lblHiddenFieldValue.Text = Adjustment.traceNumber;
+                    } break;
+                case INVENTORY_OF_PACKAGE:
+                    {
+                        this.lblHiddenField.Visible = true;
+                        this.lblHiddenFieldValue.Visible = true;
+                        this.dgCuonList.Visible = false;
+                        this.lblHiddenField.Text = "Package number:";
+                        this.lblHiddenFieldValue.Text = Adjustment.packageNumber;
+                    } break;
+                default:
+                    {
+                        this.lblHiddenField.Visible = false;
+                        this.lblHiddenFieldValue.Visible = false;
+                        this.dgCuonList.Visible = false;
+                    } break;
+            }
+            this.btnScan.Enabled = true;
         }
 
-        private void LoadData(int _transferId)
+        private void loadProductsManually(int _adjustmentId)
         {
             dtList.Rows.Clear();
 
@@ -77,44 +123,25 @@ namespace ERP
             //Load danh sach linh kien
             try
             {
-                string url = "transfer-details/search?query=transferId==" + _transferId.ToString() + "&size=2000";
+                string url = "adjustment-inputs/search?query=adjustmentId==" + _adjustmentId + "&page=0&size=1000&sort=,asc";
                 res = HTTP.GetJson(url);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Not exists transfer number !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                MessageBox.Show("Load adjustment input data Fail !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
             }
 
             if (res.Status && Util.IsJson(res.RawText))
             {
                 try
                 {
-                    List<TransferDetail> RootObject = JsonConvert.DeserializeObject<List<TransferDetail>>(res.RawText, new JsonSerializerSettings
+                    List<AdjustmentInput> RootObject = JsonConvert.DeserializeObject<List<AdjustmentInput>>(res.RawText, new JsonSerializerSettings
                     {
                         NullValueHandling = NullValueHandling.Ignore
                     });
 
-                    List<TransferDetail> ListDetail = RootObject as List<TransferDetail>;
-
-                    dtList = Util.ToDataTable<TransferDetail>(ListDetail);
-
-                    
-                    dtList.Columns.Add(COL_ID);
-                    dtList.Columns.Add(COL_SCANNED);
-                    foreach (DataRow row in dtList.Rows)
-                    {
-                        if (Convert.ToDouble(row["doneQuantity"]) > 0)
-                            row[COL_SCANNED] = "OK";
-                        else row[COL_SCANNED] = "";
-                        try
-                        {
-                            if (Convert.ToString(row["traceNumber"]).Length > 0)
-                                row[COL_ID] = row["traceNumber"];
-                            else
-                                row[COL_ID] = row["destPackageNumber"];
-                        }
-                        catch { row[COL_ID] = row["destPackageNumber"]; }
-                    }
+                    ListDetail = RootObject as List<AdjustmentInput>;
+                    dtList = Util.ToDataTable<AdjustmentInput>(ListDetail);
 
                     dgCuonList.DataSource = dtList;
                     dgCuonList.TableStyles.Clear();
@@ -127,35 +154,23 @@ namespace ERP
 
                         switch (item.ColumnName)
                         {
-                            case "destLocationName":
-                                {
-                                    tbcName.MappingName = item.ColumnName;
-                                    tbcName.HeaderText = "Location";
-                                    tbcName.Width = 30;
-                                } break;
                             case "internalReference":
                                 {
                                     tbcName.MappingName = item.ColumnName;
                                     tbcName.HeaderText = "Product";
-                                    tbcName.Width = 75;
+                                    tbcName.Width = 80;
                                 } break;
-                            case COL_ID:
+                            case "packageNumber":
                                 {
                                     tbcName.MappingName = item.ColumnName;
                                     tbcName.HeaderText = "Package";
-                                    tbcName.Width = 60;
+                                    tbcName.Width = 70;
                                 } break;
-                            //case "reserved":
-                            //    {
-                            //        tbcName.MappingName = item.ColumnName;
-                            //        tbcName.HeaderText = "Quantity";
-                            //        tbcName.Width = 30;
-                            //    } break;
-                            case COL_SCANNED:
+                            case "traceNumber":
                                 {
                                     tbcName.MappingName = item.ColumnName;
-                                    tbcName.HeaderText = "Scanned";
-                                    tbcName.Width = 30;
+                                    tbcName.HeaderText = "Lot";
+                                    tbcName.Width = 70;
                                 } break;
                             default:
                                 {
@@ -163,19 +178,11 @@ namespace ERP
                                 } break;
                         }
 
-                        //if (tbcName.MappingName != "")
-                        //{
-                        //    tbcName.MappingName = item.ColumnName;
-                        //    tbcName.HeaderText = item.ColumnName;
-                        //}
-
                         tableStyle.GridColumnStyles.Add(tbcName);
                     }
 
                     dgCuonList.TableStyles.Add(tableStyle);
-
                     dgCuonList.Refresh();
-                    btnSave.Enabled = true;
                 }
                 catch (Exception ex)
                 {
@@ -185,7 +192,7 @@ namespace ERP
             }
             else
             {
-                MessageBox.Show(res.RawText);
+                //MessageBox.Show(res.RawText);
             }
         }
 
@@ -206,298 +213,142 @@ namespace ERP
 
         private void ScanCode(string dcdData)
         {
-            //Data test
-            //dcdData = "[)>@06@P80N45HGJ456YU768@3SPKG3676573658@@";
+            //dtList.Rows.Clear();
 
-            //Obtain the string and code id.
-            //MessageBox.Show(dcdData);
             try
             {
-                if (dcdData.StartsWith("["))
+                string[] split = dcdData.Split('-');
+                _adjustmentId = Convert.ToInt32(split[1]);
+                txtInventoryName.Text = split[0].ToString();
+
+                if (_adjustmentId != 0)
                 {
-                    #region scan package/lot
-                    LabelPackage labelPackage = new LabelPackage(dcdData.Trim());
-                    DataRow[] rs_product = null; DataRow[] rs_package = null;
-                    DataRow dr = null;
-
-                    bool _exists_product = false;
-                    bool _exists_package = false;
-
-                    if (labelPackage.ProductName != null && labelPackage.ProductName != "")
-                    {
-                        rs_product = dtList.Select("internalReference = '" + labelPackage.ProductName + "'");
-                        if (rs_product.Length > 0)
-                        {
-                            _exists_product = true;
-                        }
-
-                        rs_package = dtList.Select(COL_ID + " = '" + labelPackage.PackageId + "'");
-                        if (rs_package.Length > 0)
-                        {
-                            _exists_package = true;
-                        }
-
-                        DialogResult mgb = new DialogResult();
-                        if (!_exists_product)
-                        {
-                            mgb = MessageBox.Show("Product not exists in list !", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
-                            if (mgb == DialogResult.Yes)
-                            {
-                                dr = dtList.Select("internalReference = '" + labelPackage.ProductName + "' AND " + COL_ID + " = '" + labelPackage.PackageId + "'").FirstOrDefault();
-                                if (dr == null)
-                                    addPackageNotInList(labelPackage.ProductName, labelPackage.PackageId);
-                            }
-                        }
-                        else if (!_exists_package)
-                        {
-                            mgb = MessageBox.Show("Package not exists in list !", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
-                            if (mgb == DialogResult.Yes)
-                            {
-                                dr = dtList.Select("internalReference = '" + labelPackage.ProductName + "' AND " + COL_ID + " = '" + labelPackage.PackageId + "'").FirstOrDefault();
-                                if(dr == null)
-                                    addPackageNotInList(labelPackage.ProductName, labelPackage.PackageId);
-                            }
-                        }
-                        else
-                        {
-                            //dr = dtList.Select("internalReference = '" + labelPackage.ProductName + "' AND " + COL_ID + " = '" + labelPackage.PackageId + "'").FirstOrDefault();
-                            dr = dtList.Select(COL_ID + " = '" + labelPackage.PackageId + "'").FirstOrDefault();
-
-                            //check duplicate scan
-                            //TransferDetail packDuplicate = this.listScanned.SingleOrDefault(entry => entry.id_cuon == temCuon.IdCuon);
-                            //if (packDuplicate != null)
-                            //{
-                            //    MessageBox.Show("Thung/cuon da duoc quet truoc do!");
-                            //    return;
-                            //}
-
-                            if (dr != null)
-                            {
-                                dr["doneQuantity"] = dr["reserved"];
-                                dr[COL_SCANNED] = "X";
-                            }
-                        }
-
-                        //enable button save
-                        btnScan.Enabled = true;
-                    }
-                    else
-                        MessageBox.Show("Error scan!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
-                    #endregion
-                }
-                else
-                {
-                    #region scan transfer
-                    btnSave.Enabled = false;
-                    //dtList.Rows.Clear();
+                    ApiResponse res = new ApiResponse();
+                    res.Status = false;
 
                     try
                     {
-                        string[] split = dcdData.Split('-');
-                        _transferId = Convert.ToInt32(split[1]);
-                        txtTransferNumber.Text = split[0].ToString();
+                        string url = "inventories/search?query=id==" + _adjustmentId.ToString();
+                        res = HTTP.GetJson(url);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Not exists inventory name !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                    }
 
-                        if (_transferId != 0)
+                    if (res.Status && Util.IsJson(res.RawText))
+                    {
+                        try
                         {
-                            LoadData(_transferId);
-
-                            ApiResponse res = new ApiResponse();
-                            res.Status = false;
-
-                            try
+                            List<Adjustment> RootObject = JsonConvert.DeserializeObject<List<Adjustment>>(res.RawText, new JsonSerializerSettings
                             {
-                                string url = "transfers/search?query=id==" + _transferId.ToString();
-                                res = HTTP.GetJson(url);
-                            }
-                            catch (Exception ex)
+                                NullValueHandling = NullValueHandling.Ignore
+                            });
+
+                            if (RootObject.Count > 0)
                             {
-                                MessageBox.Show("Not exists transfer number !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
-                            }
+                                _Adjustment = RootObject[0];
+                                this.lblInventoryOfValue.Text = _Adjustment.inventoryOf;
+                                this.lblInventoryLocationValue.Text = _Adjustment.locationName;
 
-                            if (res.Status && Util.IsJson(res.RawText))
-                            {
-                                try
-                                {
-                                    List<TransferInfo> RootObject = JsonConvert.DeserializeObject<List<TransferInfo>>(res.RawText, new JsonSerializerSettings
-                                    {
-                                        NullValueHandling = NullValueHandling.Ignore
-                                    });
-
-                                    if (RootObject.Count > 0)
-                                    {
-                                        TransferInfo = RootObject[0];
-                                    }
-                                    else
-                                    {
-                                        MessageBox.Show("Not exists transfer number !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
-                                    }
-
-                                }
-                                catch (Exception ex)
-                                {
-                                    MessageBox.Show("Error during loading information !");
-                                }
+                                LoadData(_Adjustment);
                             }
                             else
                             {
-                                MessageBox.Show(res.RawText);
+                                MessageBox.Show("Not exists inventory name !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
                             }
+
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            txtTransferNumber.Focus();
-                        }                        
+                            MessageBox.Show("Error during loading information !");
+                        }
                     }
-                    catch (Exception ex) {
-                        txtTransferNumber.Text = null;
-                        btnSave.Enabled = false;
-                        //listScanned.Clear();
-                        dtList.Rows.Clear();
-                        _transferId = 0;
-                        MessageBox.Show("Transfer number wrong format !"); 
+                    else
+                    {
+                        MessageBox.Show(res.RawText);
                     }
-                    #endregion
+                }
+                else
+                {
+                    txtInventoryName.Focus();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.InnerException.ToString());
-                //MessageBox.Show("Error during loading information !", "Chu y", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                txtInventoryName.Text = null;
+                dtList.Rows.Clear();
+                _adjustmentId = 0;
+                MessageBox.Show("Inventory name wrong format !");
             }
         }
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            ApiResponse res = new ApiResponse();
-            res.Status = false;
-
             try
             {
-                string url = "transfers/" + _transferId.ToString();
-
-                //transfer info
-                string para_transfer = "{";
-                para_transfer += "\"id\": " + _transferId + ", ";
-                para_transfer += "\"created\": " + TransferInfo.created + ", ";
-                para_transfer += "\"updated\": " + TransferInfo.updated + ", ";
-                para_transfer += "\"createdBy\": \"" + TransferInfo.createdBy + "\", ";
-                para_transfer += "\"transferNumber\": \"" + TransferInfo.transferNumber + "\", ";
-                para_transfer += "\"originTransferNumber\": \"" + TransferInfo.originTransferNumber + "\", ";
-                para_transfer += "\"operationTypeId\": " + TransferInfo.operationTypeId + ", ";
-                para_transfer += "\"srcLocationId\": " + TransferInfo.srcLocationId + ", ";
-                para_transfer += "\"destLocationId\": " + TransferInfo.destLocationId + ", ";
-                para_transfer += "\"scheduledDate\": " + TransferInfo.scheduledDate + ", ";
-                para_transfer += "\"state\": \"" + TransferInfo.state + "\", ";
-                para_transfer += "\"productVersionId\": " + TransferInfo.productVersionId + ", ";
-                para_transfer += "\"sourceDocument\": \"" + TransferInfo.sourceDocument + "\", ";
-                para_transfer += "\"priority\": \"" + TransferInfo.priority + "\", ";
-                para_transfer += "\"currentDemand\": " + TransferInfo.currentDemand + ", ";
-                para_transfer += "\"productionQuantity\": " + TransferInfo.productionQuantity + ", ";
-                para_transfer += "\"capacity\": " + TransferInfo.capacity + ", ";
-
-                //transfer details
-                para_transfer += "\"transferDetails\": [ ";
-                foreach (DataRow row in dtList.Rows)
+                if (dcdEvent.IsListening)
                 {
-                    if (row[COL_SCANNED] == "X")
-                    {
-                        para_transfer += "{ ";
-                        if (row["destLocationId"] != null && Convert.ToString(row["destLocationId"]).Length > 0) para_transfer += "\"destLocationId\": " + row["destLocationId"] + ", ";
-                        if (row["destPackageNumber"] != null && Convert.ToString(row["destPackageNumber"]).Length > 0) para_transfer += "\"destPackageNumber\": \"" + row["destPackageNumber"] + "\", ";
-                        if (row["doneQuantity"] != null && Convert.ToString(row["doneQuantity"]).Length > 0) para_transfer += "\"doneQuantity\": " + row["doneQuantity"] + ", ";
-                        if (row["manId"] != null && Convert.ToString(row["manId"]).Length > 0) para_transfer += "\"manId\": " + row["manId"] + ", ";
-                        if (row["manPn"] != null && Convert.ToString(row["manPn"]).Length > 0) para_transfer += "\"manPn\": \"" + row["manPn"] + "\", ";
-                        if (row["productId"] != null && Convert.ToString(row["productId"]).Length > 0) para_transfer += "\"productId\": " + row["productId"] + ", ";
-                        if (row["reserved"] != null && Convert.ToString(row["reserved"]).Length > 0) para_transfer += "\"reserved\": " + row["reserved"] + ", ";
-                        if (row["srcLocationId"] != null && Convert.ToString(row["srcLocationId"]).Length > 0) para_transfer += "\"srcLocationId\": " + row["srcLocationId"] + ", ";
-                        if (row["traceNumber"] != null && Convert.ToString(row["traceNumber"]).Length > 0) para_transfer += "\"traceNumber\": \"" + row["traceNumber"] + "\", ";
-                        if (row["transferId"] != null && Convert.ToString(row["transferId"]).Length > 0) para_transfer += "\"transferId\": " + row["transferId"] + ", ";
-                        if (row["transferItemId"] != null && Convert.ToString(row["transferItemId"]).Length > 0) para_transfer += "\"transferItemId\": " + row["transferItemId"] + ", ";
-                        if (row["id"] != null && Convert.ToString(row["id"]).Length > 0) para_transfer += "\"id\": " + row["id"] + ", ";
-                        if (row["lotId"] != null && Convert.ToString(row["lotId"]).Length > 0) para_transfer += "\"lotId\": " + row["lotId"] + ", ";
-                        if (row["reference"] != null && Convert.ToString(row["reference"]).Length > 0) para_transfer += "\"reference\": \"" + row["reference"] + "\", ";
-                        if (row["level"] != null && Convert.ToString(row["level"]).Length > 0) para_transfer += "\"level\": \"" + row["level"] + "\", ";
-                        if (row["created"] != null && Convert.ToString(row["created"]).Length > 0) para_transfer += "\"created\": " + row["created"] + ", ";
-                        if (row["createdBy"] != null && Convert.ToString(row["createdBy"]).Length > 0) para_transfer += "\"createdBy\": \"" + row["createdBy"] + "\" ";
-                        if (row["internalReference"] != null && Convert.ToString(row["internalReference"]).Length > 0) para_transfer += "\"internalReference\": \"" + row["internalReference"] + "\" ";
-                        para_transfer += "}, ";
-                    }
+                    dcdEvent.StopScanListener();
                 }
-                string end_char = para_transfer.Substring(para_transfer.Length - 2, 1);
-                if (end_char == ",") para_transfer = para_transfer.Substring(0, para_transfer.Length - 2);
-                para_transfer += " ] }";
-
-                res = HTTP.Put(url, para_transfer);
             }
-            catch (Exception ex)
+            catch { }
+            try
             {
-                MessageBox.Show("Error during allocate !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                if (hDcd != null)
+                {
+                    hDcd.Dispose();
+                }
             }
-
-            if (res.Status)
-            {
-
-            }
-            else
-            {
-                //MessageBox.Show(res.RawText);
-            }
-
-            btnScan.Enabled = false;
-
-            //refresh data
-            LoadData(_transferId);
-        }
-
-        private void dgCuonList_CurrentCellChanged(object sender, EventArgs e)
-        {
-            
+            catch { }
+            this.Close();
         }
 
         private void txtTransferNumber_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
-                string _transferNumber = txtTransferNumber.Text.Trim();
+                string _inventoryName = txtInventoryName.Text.Trim();
                 ApiResponse res = new ApiResponse();
                 res.Status = false;
-                
+
                 try
                 {
-                    string url = "transfers/search?query=transferNumber=='" + _transferNumber + "'";
+                    string url = "inventories/search?query=reference=='" + _inventoryName + "'";
                     res = HTTP.GetJson(url);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Not exists transfer number !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                    MessageBox.Show("Not exists inventory name !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
                 }
                 try
                 {
                     if (res.Status && Util.IsJson(res.RawText))
                     {
-
-                        List<TransferInfo> RootObject = JsonConvert.DeserializeObject<List<TransferInfo>>(res.RawText, new JsonSerializerSettings
+                        List<Adjustment> RootObject = JsonConvert.DeserializeObject<List<Adjustment>>(res.RawText, new JsonSerializerSettings
                         {
                             NullValueHandling = NullValueHandling.Ignore
                         });
 
                         if (RootObject.Count > 0)
                         {
-                            TransferInfo = RootObject[0];
-                            _transferId = TransferInfo.id;
+                            _Adjustment = RootObject[0];
+                            _adjustmentId = _Adjustment.id;
+                            this.lblInventoryOfValue.Text = _Adjustment.inventoryOf;
+                            this.lblInventoryLocationValue.Text = _Adjustment.locationName;
 
-                            if (_transferId != 0)
+                            if (_adjustmentId != 0)
                             {
-                                LoadData(_transferId);
+                                LoadData(_Adjustment);
                             }
                             else
                             {
-                                txtTransferNumber.Focus();
+                                txtInventoryName.Focus();
                             }
                         }
                         else
                         {
-                            MessageBox.Show("Not exists transfer number !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                            MessageBox.Show("Not exists inventory name !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
                         }
                     }
                     else
@@ -512,37 +363,93 @@ namespace ERP
             }
         }
 
-        private void addPackageNotInList(string _productName, string _packageId)
+        private void dgCuonList_Click(object sender, EventArgs e)
+        {
+
+            //try
+            //{
+            //    int index_column_scan = 0;
+            //    foreach (DataColumn item in dtList.Columns)
+            //    {
+            //        if (item.ColumnName == COL_CANCEL)
+            //        {
+            //            break;
+            //        }
+            //        index_column_scan++;
+            //    }
+            //    DataGridCell row = dgCuonList.CurrentCell;
+            //    if (row.ColumnNumber == index_column_scan)
+            //    {
+            //        dtList.Rows[row.RowNumber][COL_QUANT] = 0;
+            //        dgCuonList.Refresh();
+            //    }
+            //}
+            //catch { }
+        }
+
+        private void btnScan_Click(object sender, EventArgs e)
         {
             try
             {
-                DataRow dr = this.dtList.NewRow();
-                dr[COL_ID] = _packageId;
-                if(_packageId.StartsWith(PREFIX_LOT))
-                    dr["traceNumber"] = _packageId;
-                else
-                    dr["destPackageNumber"] = _packageId;
-                dr["internalReference"] = _productName;
-                dr[COL_SCANNED] = "X";
-                this.dtList.Rows.Add(dr);
-                this.dgCuonList.DataSource = this.dtList;
-                this.dgCuonList.Refresh();
+                if (dcdEvent.IsListening)
+                {
+                    dcdEvent.StopScanListener();
+                }
             }
-            catch(Exception ex)
+            catch { }
+            try
             {
-                MessageBox.Show(ex.ToString());
+                if (hDcd != null)
+                {
+                    hDcd.Dispose();
+                }
             }
-        }
+            catch { }
 
-        private void dgCuonList_Click(object sender, EventArgs e)
-        {
-            //dgCuonList.Select(dgCuonList.CurrentRowIndex);
-            DataGridCell row = dgCuonList.CurrentCell;
-            if (row.ColumnNumber == 3)
+            InventoryAdjustmentScan frmInventoryAdjustmentScan = new InventoryAdjustmentScan();
+            frmInventoryAdjustmentScan.ListSpace = this.ListSpace;
+            //frmInventoryAdjustmentScan.ListDetail = this.ListDetail;
+            frmInventoryAdjustmentScan.Adjustment = this._Adjustment;
+            frmInventoryAdjustmentScan.ShowDialog();
+
+            this.ListSpace = frmInventoryAdjustmentScan.ListSpace;
+            //if (frmInventoryAdjustmentScan._action == "save")
+            //{
+            //    foreach(AdjustmentDetailScan element in this.ListSpace)
+            //    {
+            //        DataRow row;
+            //        if (element.pack_id.StartsWith(PREFIX_LOT))
+            //        {
+            //            row = dtList.Select("traceNumber" + " = '" + element.pack_id + "' and internalReference = '" + element.internalReference + "' and barcode = '" + element.barcode + "'").FirstOrDefault();
+            //        }
+            //        else
+            //        {
+            //            row = dtList.Select("packageNumber" + " = '" + element.pack_id + "' and internalReference = '" + element.internalReference + "' and barcode = '" + element.barcode + "'").FirstOrDefault();
+            //        }
+            //        if (row != null)
+            //        {
+            //            row[COL_QUANT] = element.realQuantity;
+            //        }
+            //        else
+            //        {
+            //            addPackageToList(element.internalReference, element.pack_id, element.realQuantity, element.barcode);
+            //        }
+            //    }
+            //    this.dgCuonList.DataSource = this.dtList;
+            //    this.dgCuonList.Refresh();
+
+            //    this.ListSpace.Clear();
+            //}
+
+            //Initialize event
+            try
             {
-                dtList.Rows[row.RowNumber][COL_SCANNED] = "";
-                dgCuonList.Refresh();
+                hDcd = new DecodeHandle(DecodeDeviceCap.Exists | DecodeDeviceCap.Barcode);
+                DecodeRequest reqType = (DecodeRequest)1 | DecodeRequest.PostRecurring;
+                dcdEvent = new DecodeEvent(hDcd, reqType, this);
+                dcdEvent.Scanned += new DecodeScanned(dcdEvent_Scanned);
             }
+            catch (Exception ex) { }
         }
     }
 

@@ -145,7 +145,26 @@ namespace ERP
 
         private void btnInventoryAdjustment_Click(object sender, EventArgs e)
         {
+            InventoryAdjustment frmInventoryAdjustment = new InventoryAdjustment();
+            frmInventoryAdjustment.ShowDialog();
+        }
 
+        private void menuItem3_Click(object sender, EventArgs e)
+        {
+            SetLocation frmSetLocation = new SetLocation();
+            frmSetLocation.ShowDialog();
+        }
+
+        private void menuItem4_Click(object sender, EventArgs e)
+        {
+            TransferOut frmTransferOut = new TransferOut();
+            frmTransferOut.ShowDialog();
+        }
+
+        private void menuItem5_Click(object sender, EventArgs e)
+        {
+            InventoryAdjustment frmInventoryAdjustment = new InventoryAdjustment();
+            frmInventoryAdjustment.ShowDialog();
         }
 
     }

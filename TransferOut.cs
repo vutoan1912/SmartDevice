@@ -68,11 +68,11 @@ namespace ERP
 
         private void btnReset_Click(object sender, EventArgs e)
         {
+            LoadData(_transferId);
+
             //TEST
             //ScanCode("HQV/IN/00006-34");
-            //ScanCode("[)>@06@PPJV2VBSK000001UJ@3SLOT00028@@");
-
-            LoadData(_transferId);
+            //ScanCode("[)>@06@PEP2SPBTU0000029H@3SLOT00121@@");
         }
 
         private void LoadData(int _transferId)
@@ -112,16 +112,29 @@ namespace ERP
                     foreach (DataRow row in dtList.Rows)
                     {
                         if (Convert.ToDouble(row["doneQuantity"]) > 0)
-                            row[COL_SCANNED] = "OK";
-                        else row[COL_SCANNED] = "";
-                        try
                         {
-                            if (Convert.ToString(row["traceNumber"]).Length > 0)
-                                row[COL_PACKID] = row["traceNumber"];
-                            else
-                                row[COL_PACKID] = row["destPackageNumber"];
+                            row[COL_SCANNED] = "OK";
+                            try
+                            {
+                                if (Convert.ToString(row["traceNumber"]).Length > 0)
+                                    row[COL_PACKID] = row["traceNumber"];
+                                else
+                                    row[COL_PACKID] = row["destPackageNumber"];
+                            }
+                            catch { row[COL_PACKID] = row["destPackageNumber"]; }
                         }
-                        catch { row[COL_PACKID] = row["destPackageNumber"]; }
+                        else
+                        {
+                            row[COL_SCANNED] = "";
+                            try
+                            {
+                                if (Convert.ToString(row["traceNumber"]).Length > 0)
+                                    row[COL_PACKID] = row["traceNumber"];
+                                else
+                                    row[COL_PACKID] = row["srcPackageNumber"];
+                            }
+                            catch { row[COL_PACKID] = row["srcPackageNumber"]; }
+                        }
                     }
 
                     dgCuonList.DataSource = dtList;
@@ -258,13 +271,13 @@ namespace ERP
                         }
                         else if (!_exists_package)
                         {
-                            mgb = MessageBox.Show("Package not exists in list !", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
-                            if (mgb == DialogResult.Yes)
-                            {
-                                dr = dtList.Select("internalReference = '" + labelPackage.ProductName + "' AND " + COL_PACKID + " = '" + labelPackage.PackageId + "'").FirstOrDefault();
-                                if(dr == null)
+                            //mgb = MessageBox.Show("Package not exists in list !", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                            //if (mgb == DialogResult.Yes)
+                            //{
+                            //    dr = dtList.Select("internalReference = '" + labelPackage.ProductName + "' AND " + COL_PACKID + " = '" + labelPackage.PackageId + "'").FirstOrDefault();
+                            //    if(dr == null)
                                     addPackageNotInList(labelPackage.ProductName, labelPackage.PackageId);
-                            }
+                            //}
                         }
                         else
                         {
@@ -300,8 +313,46 @@ namespace ERP
                     #endregion
                 }
                 else if (Util.OnlyHexInString(dcdData.Trim()))
-                { 
+                {
+                    #region scan serial number
+                    string SerialNumber = dcdData.Trim();
+                    DataRow[] rs_package = null;
+                    DataRow dr = null;
+                    bool _exists_package = false;
 
+                    rs_package = dtList.Select(COL_PACKID + " = '" + SerialNumber + "'");
+                    if (rs_package.Length > 0)
+                    {
+                        _exists_package = true;
+                    }
+
+                    if (!_exists_package)
+                    {
+                        DialogResult mgb = new DialogResult();
+                        mgb = MessageBox.Show("Serial number not exists in list !", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                        if (mgb == DialogResult.Yes)
+                        {
+                            dr = dtList.Select(COL_PACKID + " = '" + SerialNumber + "'").FirstOrDefault();
+                            if (dr == null) addPackageNotInList(null, SerialNumber);
+                        }
+                    }
+                    else
+                    {
+                        dr = dtList.Select(COL_PACKID + " = '" + SerialNumber + "'").FirstOrDefault();
+
+                        if (dr != null)
+                        {
+                            if (Convert.ToInt32(dr[COL_ID]) > 0)
+                            {
+                                dr["doneQuantity"] = dr["reserved"];
+                                dr[COL_SCANNED] = "X";
+                            }
+
+                            int index = dtList.Rows.IndexOf(dr);
+                            this.dgCuonList.CurrentRowIndex = index;
+                        }
+                    }
+                    #endregion
                 }
                 else
                 {
@@ -387,6 +438,12 @@ namespace ERP
 
         private void btnSave_Click(object sender, EventArgs e)
         {
+            if (this.TransferInfo.state == "done")
+            {
+                MessageBox.Show("The selected transaction has completed, actions are not allowed !");
+                return;
+            }
+
             ApiResponse res = new ApiResponse();
             res.Status = false;
 
@@ -422,23 +479,24 @@ namespace ERP
                     {
                         para_transfer += "{ ";
                         if (row["destLocationId"] != null && Convert.ToString(row["destLocationId"]).Length > 0) para_transfer += "\"destLocationId\": " + row["destLocationId"] + ", ";
-                        if (row["destPackageNumber"] != null && Convert.ToString(row["destPackageNumber"]).Length > 0) para_transfer += "\"destPackageNumber\": \"" + row["destPackageNumber"] + "\", ";
+                        if (row["destPackageNumber"] != null && Convert.ToString(row["destPackageNumber"]).Length > 0) para_transfer += "\"destPackageNumber\": \"" + Convert.ToString(row["destPackageNumber"]).Trim() + "\", ";
+                        if (row["srcPackageNumber"] != null && Convert.ToString(row["srcPackageNumber"]).Length > 0) para_transfer += "\"srcPackageNumber\": \"" + Convert.ToString(row["srcPackageNumber"]).Trim() + "\", ";
                         if (row["doneQuantity"] != null && Convert.ToString(row["doneQuantity"]).Length > 0) para_transfer += "\"doneQuantity\": " + row["doneQuantity"] + ", ";
                         if (row["manId"] != null && Convert.ToString(row["manId"]).Length > 0) para_transfer += "\"manId\": " + row["manId"] + ", ";
-                        if (row["manPn"] != null && Convert.ToString(row["manPn"]).Length > 0) para_transfer += "\"manPn\": \"" + row["manPn"] + "\", ";
+                        if (row["manPn"] != null && Convert.ToString(row["manPn"]).Length > 0) para_transfer += "\"manPn\": \"" + Convert.ToString(row["manPn"]).Trim() + "\", ";
                         if (row["productId"] != null && Convert.ToString(row["productId"]).Length > 0) para_transfer += "\"productId\": " + row["productId"] + ", ";
                         if (row["reserved"] != null && Convert.ToString(row["reserved"]).Length > 0) para_transfer += "\"reserved\": " + row["reserved"] + ", ";
                         if (row["srcLocationId"] != null && Convert.ToString(row["srcLocationId"]).Length > 0) para_transfer += "\"srcLocationId\": " + row["srcLocationId"] + ", ";
-                        if (row["traceNumber"] != null && Convert.ToString(row["traceNumber"]).Length > 0) para_transfer += "\"traceNumber\": \"" + row["traceNumber"] + "\", ";
+                        if (row["traceNumber"] != null && Convert.ToString(row["traceNumber"]).Length > 0) para_transfer += "\"traceNumber\": \"" + Convert.ToString(row["traceNumber"]).Trim() + "\", ";
                         if (row["transferId"] != null && Convert.ToString(row["transferId"]).Length > 0) para_transfer += "\"transferId\": " + row["transferId"] + ", ";
                         if (row["transferItemId"] != null && Convert.ToString(row["transferItemId"]).Length > 0) para_transfer += "\"transferItemId\": " + row["transferItemId"] + ", ";
-                        if (row["id"] != null && Convert.ToString(row["id"]).Length > 0) para_transfer += "\"id\": " + row["id"] + ", ";
+                        if (row["id"] != null && Convert.ToInt32(row["id"]) > 0) para_transfer += "\"id\": " + row["id"] + ", ";
                         if (row["lotId"] != null && Convert.ToString(row["lotId"]).Length > 0) para_transfer += "\"lotId\": " + row["lotId"] + ", ";
-                        if (row["reference"] != null && Convert.ToString(row["reference"]).Length > 0) para_transfer += "\"reference\": \"" + row["reference"] + "\", ";
+                        if (row["reference"] != null && Convert.ToString(row["reference"]).Length > 0) para_transfer += "\"reference\": \"" + Convert.ToString(row["reference"]).Trim() + "\", ";
                         if (row["level"] != null && Convert.ToString(row["level"]).Length > 0) para_transfer += "\"level\": \"" + row["level"] + "\", ";
                         if (row["created"] != null && Convert.ToString(row["created"]).Length > 0) para_transfer += "\"created\": " + row["created"] + ", ";
                         if (row["createdBy"] != null && Convert.ToString(row["createdBy"]).Length > 0) para_transfer += "\"createdBy\": \"" + row["createdBy"] + "\", ";
-                        if (row["internalReference"] != null && Convert.ToString(row["internalReference"]).Length > 0) para_transfer += "\"internalReference\": \"" + row["internalReference"] + "\" ";
+                        if (row["internalReference"] != null && Convert.ToString(row["internalReference"]).Length > 0) para_transfer += "\"internalReference\": \"" + Convert.ToString(row["internalReference"]).Trim() + "\" ";
                         para_transfer += "}, ";
                     }
                 }
@@ -454,25 +512,23 @@ namespace ERP
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error during allocate !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
-                Util.Logs(ex.ToString());
+                MessageBox.Show(ex.Message.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
             }
 
             if (res.Status)
             {
                 MessageBox.Show("Export Success !");
+                btnSave.Enabled = false;
+                btnReset.Enabled = true;
+                this.dtList.Rows.Clear();
+                this.dgCuonList.Refresh();
+                _transferId = 0;
+                this.txtTransferNumber.Text = null;
             }
             else
             {
                 //MessageBox.Show(res.RawText);
             }
-
-            btnSave.Enabled = false;
-            btnReset.Enabled = true;
-            this.dtList.Rows.Clear();
-            this.dgCuonList.Refresh();
-            _transferId = 0;
-            this.txtTransferNumber.Text = null;
 
         }
 
@@ -550,10 +606,13 @@ namespace ERP
                 dr[COL_ID] = -1;
                 dr[COL_LOCATION] = null;
                 dr[COL_PACKID] = _packageId;
-                if(_packageId.StartsWith(PREFIX_LOT))
+                if (_packageId.StartsWith(PREFIX_LOT))
                     dr["traceNumber"] = _packageId;
                 else
+                {
                     dr["destPackageNumber"] = _packageId;
+                    dr["srcPackageNumber"] = _packageId;
+                }
                 dr["internalReference"] = _productName;
                 dr[COL_SCANNED] = "N";
                 this.dtList.Rows.Add(dr);

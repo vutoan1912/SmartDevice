@@ -56,9 +56,9 @@ namespace ERP
         public string sourceDocument { get; set; }
         public string priority { get; set; }
         public List<object> quantInfo { get; set; }
-        public int currentDemand { get; set; }
+        public int? currentDemand { get; set; }
         public List<int> otherProjects { get; set; }
-        public int productionQuantity { get; set; }
+        public int? productionQuantity { get; set; }
         public int capacity { get; set; }
         public List<object> moItems { get; set; }
         public List<object> transferItems { get; set; }

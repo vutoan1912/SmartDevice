@@ -79,7 +79,7 @@ namespace ERP
             //ScanCode("[)>@06@P8NF36343000226P4@3SLOT11060@@");
             //ScanCode("[)>@06@P8NF36343000226P4@3SLOT11061@@");
 
-            //ScanCode("270-H.4");
+            //ScanCode("1256-SA4-3");
         }
 
         private void InitData()
@@ -178,9 +178,13 @@ namespace ERP
                         else
                         {
                             addPackageToList(labelPackage.ProductName, labelPackage.PackageId);
-                            //enable button save
-                            btnSave.Enabled = true;
-                            btnClear.Enabled = true;
+
+                            if (BarcodeLocation.Trim().Length > 0 && !btnSave.Enabled)
+                            {
+                                //enable button save
+                                btnSave.Enabled = true;
+                                btnClear.Enabled = true;
+                            }
                         }
                     }
                     else
@@ -197,18 +201,56 @@ namespace ERP
             else
             {
                 #region Scan location
+
+                ApiResponse res = new ApiResponse();
+                res.Status = false;
                 try
                 {
-                    BarcodeLocation = dcdData;
-                    string[] split = dcdData.Split('-');
-                    this.lblLocationBarcode.Text = dcdData.Substring(split[0].Length + 1, dcdData.Length - (split[0].Length + 1));
+                    string url = "locations/search?query=barcode==\"" + dcdData.Trim() + "\"";
+                    res = HTTP.GetJson(url);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Wrong location barcode format !");
-                    //MessageBox.Show(ex.InnerException.ToString());
-                    //MessageBox.Show("Error during loading information !", "Chu y", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                    MessageBox.Show("Error during load location information !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
                 }
+
+                if (res.Status && Util.IsJson(res.RawText))
+                {
+                    try
+                    {
+                        List<LocationInfo> RootObject = JsonConvert.DeserializeObject<List<LocationInfo>>(res.RawText, new JsonSerializerSettings
+                        {
+                            NullValueHandling = NullValueHandling.Ignore
+                        });
+
+                        List<LocationInfo> ListLocations = RootObject as List<LocationInfo>;
+                        this.lblLocationBarcode.Text = ListLocations[0].name;
+                        BarcodeLocation = dcdData;
+
+                        if (this.dtList.Rows.Count > 0 && !btnSave.Enabled)
+                        {
+                            //enable button save
+                            btnSave.Enabled = true;
+                            btnClear.Enabled = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error during load location information !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                    }
+                }
+
+
+                //try
+                //{
+                //    BarcodeLocation = dcdData;
+                //    string[] split = dcdData.Split('-');
+                //    this.lblLocationBarcode.Text = dcdData.Substring(split[0].Length + 1, dcdData.Length - (split[0].Length + 1));
+                //}
+                //catch (Exception ex)
+                //{
+                //    MessageBox.Show("Wrong location barcode format !");
+                //}
                 #endregion
             }
         }

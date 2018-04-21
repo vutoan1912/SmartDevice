@@ -6,6 +6,7 @@ using System.IO;
 using System.Collections.Specialized;
 using ERP.Base;
 using System.Xml;
+using Newtonsoft.Json;
 
 namespace ERP
 {
@@ -233,16 +234,45 @@ namespace ERP
                 requestWriter.Dispose();
                 responseReader.Dispose();
             }
-            catch (Exception e)
+            catch (WebException e)
             {
                 api_res.Status = false;
-                throw new System.Exception("No network connection !");
+
+                if (e.Response != null)
+                {
+                    using (var errorResponse = (HttpWebResponse)e.Response)
+                    {
+                        using (var reader = new StreamReader(errorResponse.GetResponseStream()))
+                        {
+                            string error = reader.ReadToEnd();
+                            //TODO: use JSON.net to parse this string and look at the error message
+                            ErrorEntity ErrorEntity = JsonConvert.DeserializeObject<ErrorEntity>(error, new JsonSerializerSettings
+                            {
+                                NullValueHandling = NullValueHandling.Ignore
+                            });
+                            throw new System.Exception(ErrorEntity.title);
+                        }
+                    }
+                }
+                else
+                {
+                    throw new System.Exception("Error !");
+                }
             }
-
-
             return api_res;
         }
     
+    }
+
+    public class ErrorEntity
+    {
+        public string entityName { get; set; }
+        public string errorKey { get; set; }
+        public string type { get; set; }
+        public string title { get; set; }
+        public int status { get; set; }
+        public string message { get; set; }
+        public string @params { get; set; }
     }
 
     public class HttpRequest
