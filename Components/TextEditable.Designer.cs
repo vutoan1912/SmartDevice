@@ -36,9 +36,10 @@
             // txtValue
             // 
             this.txtValue.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtValue.Font = new System.Drawing.Font("Tahoma", 10F, System.Drawing.FontStyle.Regular);
             this.txtValue.Location = new System.Drawing.Point(0, 0);
             this.txtValue.Name = "txtValue";
-            this.txtValue.Size = new System.Drawing.Size(120, 21);
+            this.txtValue.Size = new System.Drawing.Size(200, 23);
             this.txtValue.TabIndex = 0;
             this.txtValue.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtValue_KeyDown);
             // 
@@ -47,10 +48,12 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.AutoScroll = true;
-            this.ClientSize = new System.Drawing.Size(120, 22);
+            this.ClientSize = new System.Drawing.Size(200, 23);
             this.Controls.Add(this.txtValue);
+            this.Font = new System.Drawing.Font("Tahoma", 10F, System.Drawing.FontStyle.Regular);
             this.Name = "TextEditable";
             this.Text = "TextEditable";
+            this.Load += new System.EventHandler(this.TextEditable_Load);
             this.ResumeLayout(false);
 
         }

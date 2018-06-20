@@ -167,6 +167,10 @@ namespace ERP
             webRequest.Referer = Config.API_URL;
             webRequest.Headers["Authorization"] = ERP.Base.Config.Token;
 
+            webRequest.KeepAlive = true;
+            webRequest.AllowWriteStreamBuffering = true;
+            webRequest.SendChunked = true;
+
             WebResponse myWebResponse = null;
 
             try {
@@ -186,9 +190,29 @@ namespace ERP
                 requestWriter.Dispose();
                 responseReader.Dispose();
             }
-            catch(Exception e){
+            catch (WebException e)
+            {
                 api_res.Status = false;
-                throw new System.Exception("No network connection !");
+                if (e.Response != null)
+                {
+                    using (var errorResponse = (HttpWebResponse)e.Response)
+                    {
+                        using (var reader = new StreamReader(errorResponse.GetResponseStream()))
+                        {
+                            string error = reader.ReadToEnd();
+                            //TODO: use JSON.net to parse this string and look at the error message
+                            ErrorEntity ErrorEntity = JsonConvert.DeserializeObject<ErrorEntity>(error, new JsonSerializerSettings
+                            {
+                                NullValueHandling = NullValueHandling.Ignore
+                            });
+                            throw new System.Exception(ErrorEntity.title);
+                        }
+                    }
+                }
+                else
+                {
+                    throw new System.Exception("Error !");
+                }
             }
 
 
@@ -213,26 +237,40 @@ namespace ERP
             webRequest.Accept = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
             webRequest.Referer = Config.API_URL;
             webRequest.Headers["Authorization"] = ERP.Base.Config.Token;
+            
+            webRequest.KeepAlive = true;
+            webRequest.AllowWriteStreamBuffering = true;
+            webRequest.SendChunked = true;
 
             WebResponse myWebResponse = null;
 
             try
             {
-                StreamWriter requestWriter = new StreamWriter(webRequest.GetRequestStream());
-                requestWriter.Write(postString);
-                requestWriter.Close();
+                //StreamWriter requestWriter = new StreamWriter(webRequest.GetRequestStream());
+                //requestWriter.Write(postString);
+
+                using (StreamWriter requestWriter = new StreamWriter(webRequest.GetRequestStream()))
+                {
+                    requestWriter.Write(postString);
+                }
 
                 myWebResponse = webRequest.GetResponse();
 
-                StreamReader responseReader = new StreamReader(myWebResponse.GetResponseStream());
-                string responseData = responseReader.ReadToEnd();
+                //StreamReader responseReader = new StreamReader(myWebResponse.GetResponseStream());
+                //string responseData = responseReader.ReadToEnd();
 
-                api_res.RawText = responseData;
+                using (StreamReader responseReader = new StreamReader(myWebResponse.GetResponseStream()))
+                {
+                    api_res.RawText = responseReader.ReadToEnd();
+                }
 
-                responseReader.Close();
                 myWebResponse.Close();
-                requestWriter.Dispose();
-                responseReader.Dispose();
+                
+                //requestWriter.Close();
+                //requestWriter.Dispose();
+                //responseReader.Close();
+                //responseReader.Dispose();
+                
             }
             catch (WebException e)
             {

@@ -14,12 +14,13 @@ namespace ERP
 {
     public partial class InventoryAdjustment : Form
     {
+        #region Properties
         private DecodeEvent dcdEvent;
         private DecodeHandle hDcd;
 
         //private const string COL_CANCEL = "cancel";
         private const string COL_QUANT = "realQuantity";
-        private const string PREFIX_LOT = "LOT";
+        private const string PREFIX_LOT = "UID";
         private const string PREFIX_PACK = "PACK";
 
         private int _adjustmentId = 0;
@@ -37,9 +38,6 @@ namespace ERP
         //private const string INVENTORY_OF_RANDOM_SAMPLE = "random_sample";
 
         private List<AdjustmentDetail> ListSpace = new List<AdjustmentDetail>();
-
-        #region Properties
-
         #endregion
 
         public InventoryAdjustment()
@@ -111,7 +109,14 @@ namespace ERP
                         this.dgCuonList.Visible = false;
                     } break;
             }
-            this.btnScan.Enabled = true;
+        }
+
+        private void checkScan(Adjustment _Adjustment)
+        {
+            if(_Adjustment.state == "in_progress")
+                this.btnScan.Enabled = true;
+            else
+                this.btnScan.Enabled = false;
         }
 
         private void loadProductsManually(int _adjustmentId)
@@ -141,6 +146,17 @@ namespace ERP
                     });
 
                     ListDetail = RootObject as List<AdjustmentInput>;
+
+                    foreach (AdjustmentInput item in ListDetail)
+                    {
+                        if (item.internalReference == null && item.productId != null)
+                        {
+                            Product product = new Product();
+                            Product productInfo = product.getInfo(item.productId);
+                            if (productInfo != null) item.internalReference = productInfo.name;
+                        }
+                    }
+
                     dtList = Util.ToDataTable<AdjustmentInput>(ListDetail);
 
                     dgCuonList.DataSource = dtList;
@@ -158,19 +174,19 @@ namespace ERP
                                 {
                                     tbcName.MappingName = item.ColumnName;
                                     tbcName.HeaderText = "Product";
-                                    tbcName.Width = 80;
+                                    tbcName.Width = 100;
                                 } break;
                             case "packageNumber":
                                 {
                                     tbcName.MappingName = item.ColumnName;
                                     tbcName.HeaderText = "Package";
-                                    tbcName.Width = 70;
+                                    tbcName.Width = 60;
                                 } break;
                             case "traceNumber":
                                 {
                                     tbcName.MappingName = item.ColumnName;
-                                    tbcName.HeaderText = "Lot";
-                                    tbcName.Width = 70;
+                                    tbcName.HeaderText = "Unit ID";
+                                    tbcName.Width = 60;
                                 } break;
                             default:
                                 {
@@ -217,23 +233,19 @@ namespace ERP
 
             try
             {
-                string[] split = dcdData.Split('-');
-                _adjustmentId = Convert.ToInt32(split[1]);
-                txtInventoryName.Text = split[0].ToString();
-
-                if (_adjustmentId != 0)
+                if (dcdData.Trim().Length > 0)
                 {
                     ApiResponse res = new ApiResponse();
                     res.Status = false;
 
                     try
                     {
-                        string url = "inventories/search?query=id==" + _adjustmentId.ToString();
+                        string url = "inventories/search?query=reference==\"" + dcdData.Trim() + "\"";
                         res = HTTP.GetJson(url);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("Not exists inventory name !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                        MessageBox.Show(ex.Message.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
                     }
 
                     if (res.Status && Util.IsJson(res.RawText))
@@ -250,6 +262,12 @@ namespace ERP
                                 _Adjustment = RootObject[0];
                                 this.lblInventoryOfValue.Text = _Adjustment.inventoryOf;
                                 this.lblInventoryLocationValue.Text = _Adjustment.locationName;
+
+                                _adjustmentId = _Adjustment.id;
+                                txtInventoryName.Text = _Adjustment.reference;
+                                this.ListSpace.Clear();
+
+                                checkScan(_Adjustment);
 
                                 LoadData(_Adjustment);
                             }
@@ -336,6 +354,9 @@ namespace ERP
                             _adjustmentId = _Adjustment.id;
                             this.lblInventoryOfValue.Text = _Adjustment.inventoryOf;
                             this.lblInventoryLocationValue.Text = _Adjustment.locationName;
+                            this.ListSpace.Clear();
+
+                            checkScan(_Adjustment);
 
                             if (_adjustmentId != 0)
                             {
@@ -413,33 +434,6 @@ namespace ERP
             frmInventoryAdjustmentScan.ShowDialog();
 
             this.ListSpace = frmInventoryAdjustmentScan.ListSpace;
-            //if (frmInventoryAdjustmentScan._action == "save")
-            //{
-            //    foreach(AdjustmentDetailScan element in this.ListSpace)
-            //    {
-            //        DataRow row;
-            //        if (element.pack_id.StartsWith(PREFIX_LOT))
-            //        {
-            //            row = dtList.Select("traceNumber" + " = '" + element.pack_id + "' and internalReference = '" + element.internalReference + "' and barcode = '" + element.barcode + "'").FirstOrDefault();
-            //        }
-            //        else
-            //        {
-            //            row = dtList.Select("packageNumber" + " = '" + element.pack_id + "' and internalReference = '" + element.internalReference + "' and barcode = '" + element.barcode + "'").FirstOrDefault();
-            //        }
-            //        if (row != null)
-            //        {
-            //            row[COL_QUANT] = element.realQuantity;
-            //        }
-            //        else
-            //        {
-            //            addPackageToList(element.internalReference, element.pack_id, element.realQuantity, element.barcode);
-            //        }
-            //    }
-            //    this.dgCuonList.DataSource = this.dtList;
-            //    this.dgCuonList.Refresh();
-
-            //    this.ListSpace.Clear();
-            //}
 
             //Initialize event
             try

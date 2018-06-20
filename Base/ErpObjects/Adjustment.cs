@@ -20,17 +20,23 @@ namespace ERP
         public string inventoryOf { get; set; }
         public int requesterId { get; set; }
         public int assigneeId { get; set; }
+        public List<object> assigneeIds { get; set; }
         public bool exhaustedProducts { get; set; }
         public string state { get; set; }
         public List<AdjustmentDetail> adjustmentDetails { get; set; }
         public List<object> adjustmentInputs { get; set; }
         public List<object> deletedAdjustmentInputs { get; set; }
-        public List<object> errorDetails { get; set; }
+        public List<AdjustmentDetail> errorDetails { get; set; }
         public List<object> errorInputs { get; set; }
-        public List<object> transferDetails { get; set; }
+        public List<TransferDetail> transferDetails { get; set; }
         public string categoryName { get; set; }
         public string traceNumber { get; set; }
         public string packageNumber { get; set; }
+        public int? lotId { get; set; }
+        public int? packageId { get; set; }
+        public long? inventoryDate { get; set; }
+        public long? forceAccountingDate { get; set; }
+        public int? categoryId { get; set; }
     }
 
     public class AdjustmentDetail
@@ -46,7 +52,6 @@ namespace ERP
         public string internalReference { get; set; }
         public int? locationId { get; set; }
         public string locationName { get; set; }
-        public double theoreticalQuantity { get; set; }
         public string state { get; set; }
         public string productDescription { get; set; }
         public string manPn { get; set; }
@@ -54,8 +59,10 @@ namespace ERP
         public string packageNumber { get; set; }
         public int? lotId { get; set; }
         public string traceNumber { get; set; }
+        public double theoreticalQuantity { get; set; }
         public double realQuantity { get; set; }
         public string barcode { get; set; }
+        public string type { get; set; }
     }
 
     public class AdjustmentInput

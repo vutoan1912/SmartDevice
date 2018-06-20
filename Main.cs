@@ -7,14 +7,21 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 using Datalogic.API;
+using ERP.Base;
 
 namespace ERP
 {
     public partial class Main : Form
     {
+        //private DecodeEvent dcdEvent;
+        //private DecodeHandle hDcd;
+
         private Form _frmLogin;
-        private DecodeEvent dcdEvent;
-        private DecodeHandle hDcd;
+        public Form frmLogin
+        {
+            get { return _frmLogin; }
+            set { _frmLogin = value; }
+        }
 
         public Main()
         {
@@ -36,15 +43,9 @@ namespace ERP
             //ScanCode(dcdData);
         }
 
-        private void btnNoiLinhKien_Click(object sender, EventArgs e)
+        private void Main_Load(object sender, EventArgs e)
         {
-            
-        }
-
-        private void btnXuatKhoLinhKien_Click(object sender, EventArgs e)
-        {
-            XuatKhoLinhKienOption frmXuatKhoLKOption = new XuatKhoLinhKienOption();
-            frmXuatKhoLKOption.ShowDialog();
+            //loadData();
         }
 
         private void Main_Closed(object sender, EventArgs e)
@@ -53,88 +54,15 @@ namespace ERP
             Application.Exit();
         }
 
-        public Form frmLogin
-        {
-            get { return _frmLogin; }
-            set { _frmLogin = value; }
-        }
-
-        private void btnCapNhatViTri_Click(object sender, EventArgs e)
-        {
-            CapNhatViTriKho frmCapNhatViTri = new CapNhatViTriKho();
-            frmCapNhatViTri.ShowDialog();
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            CapNhatViTriKho2 frmCapNhatViTri = new CapNhatViTriKho2();
-            frmCapNhatViTri.ShowDialog();
-        }
-
-        private void btnVTTP_Click(object sender, EventArgs e)
-        {
-            CapNhatViTriThanhPham frmCapNhatViTriThanhPham = new CapNhatViTriThanhPham();
-            frmCapNhatViTriThanhPham.ShowDialog();
-        }
-
         private void btnProductOut_Click(object sender, EventArgs e)
         {
             TransferOut frmTransferOut = new TransferOut();
             frmTransferOut.ShowDialog();
         }
 
-        //private void btnXuatKhoThanhPham_Click(object sender, EventArgs e)
-        //{
-        //    XuatKhoThanhPham frmXKTP = new XuatKhoThanhPham();
-        //    frmXKTP.ShowDialog();
-        //}
-
         private void ScanCode(string dcdData)
         {
-            try
-            {
 
-                string barcode = dcdData.Substring(0, 6);
-                string[] codes = dcdData.Split('-');
-                string code = "";
-                try
-                {
-                    code = codes[3];
-                }
-                catch { return; };
-
-                MessageBox.Show(barcode);
-                switch (barcode)
-                {
-                    case "PA-I-R":
-                        MessageBox.Show(code);
-                        break;
-                    case "PA-I-P":
-                        MessageBox.Show(code);
-                        break;
-                    case "PA-E-R":
-                        MessageBox.Show(code);
-                        if (code.Length > 0)
-                        {
-                            XuatKhoLinhKienFree frmXuatKhoLinhKienFree = new XuatKhoLinhKienFree();
-                            frmXuatKhoLinhKienFree.ShowDialog();
-                        }
-                        break;
-                    case "PA-E-P":
-                        MessageBox.Show(code);
-                        break;
-                    case "SE-E-R":
-                        MessageBox.Show(code);
-                        break;
-                    default:
-                        MessageBox.Show("Not exists code");
-                        break;
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString());
-            }
         }
 
         private void btnNKHH_Click(object sender, EventArgs e)
@@ -167,5 +95,63 @@ namespace ERP
             frmInventoryAdjustment.ShowDialog();
         }
 
+        private void btnPackagingItems_Click(object sender, EventArgs e)
+        {
+            PackagingItems frmPackagingItems = new PackagingItems();
+            frmPackagingItems.ShowDialog();
+        }
+
+        private void menuItem7_Click(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void menuItem6_Click(object sender, EventArgs e)
+        {
+            TextEditable textEditable = new TextEditable();
+            textEditable.valueEdit = Config.API_URL;
+            textEditable.ShowDialog();
+            Config.API_URL = textEditable.valueEdit.Trim();
+        }
+
+        private void menuItem8_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void menuItem2_Click(object sender, EventArgs e)
+        {
+            PackagingItems frmPackagingItems = new PackagingItems();
+            frmPackagingItems.ShowDialog();
+        }
+
+        private void btnImportation_Click(object sender, EventArgs e)
+        {
+            DashBoardTransfer dashBoardTransfer = new DashBoardTransfer();
+            dashBoardTransfer.TypeTransfer = 0;
+            dashBoardTransfer.ShowDialog();
+        }
+
+        private void btnAdjustment_Click(object sender, EventArgs e)
+        {
+            InventoryAdjustment InventoryAdjustment = new InventoryAdjustment();
+            InventoryAdjustment.ShowDialog();
+        }
+
+        private void btnExportation_Click(object sender, EventArgs e)
+        {
+            DashBoardTransfer dashBoardTransfer = new DashBoardTransfer();
+            dashBoardTransfer.TypeTransfer = 1;
+            dashBoardTransfer.ShowDialog();
+        }
+
+        private void btnMovePackage_Click(object sender, EventArgs e)
+        {
+            PackagingItems PackagingItems = new PackagingItems();
+            PackagingItems.ShowDialog();
+        }
+
     }
+
+
 }

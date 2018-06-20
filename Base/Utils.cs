@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.IO;
+using System.Windows.Forms;
 
 namespace ERP
 {
@@ -172,6 +173,50 @@ namespace ERP
         {
             // For C-style hex notation (0xFF) you can use @"\A\b(0[xX])?[0-9a-fA-F]+\b\Z"
             return System.Text.RegularExpressions.Regex.IsMatch(text, @"\A\b[0-9a-fA-F]+\b\Z");
+        }
+
+        private static string PREFIX_PACKAGE = "PACK";
+        private static string PREFIX_UID = "UID";
+        private static string PREFIX_OLD = "PN:";
+
+        public static int getTypePackage(string packageID, string type)
+        {
+            if (packageID.StartsWith(PREFIX_PACKAGE)) return 1; //new package
+            else if (packageID.StartsWith(PREFIX_UID)) return 2; //new uid
+            else if (packageID.StartsWith(PREFIX_OLD) && type == "1") return 3; //old package
+            else if (packageID.StartsWith(PREFIX_OLD) && type == "0") return 4; //old uid
+            else if (Util.OnlyHexInString(packageID) && packageID.Length != 15) return 5; //final product package
+            else if (Util.OnlyHexInString(packageID)) return 6; //serial number
+            else return 0;
+
+        }
+    }
+
+    public class DelegateControl
+    {
+        public DelegateControl()
+        {
+        }
+
+        public delegate void ControlUpdater(Control uiControl, string value);
+        public static void UpdateControlWithValue(Control uiControl, string value)
+        {
+            uiControl.Text = value;
+        }
+
+        public static string readControlText(Control varControl)
+        {
+            if (varControl.InvokeRequired)
+            {
+                return (string)varControl.Invoke(
+                  new Func<String>(() => readControlText(varControl))
+                );
+            }
+            else
+            {
+                string varText = varControl.Text;
+                return varText;
+            }
         }
     }
 }

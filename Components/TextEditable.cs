@@ -27,5 +27,10 @@ namespace ERP
                 this.Close();
             }
         }
+
+        private void TextEditable_Load(object sender, EventArgs e)
+        {
+            this.txtValue.Text = valueEdit.Trim();
+        }
     }
 }

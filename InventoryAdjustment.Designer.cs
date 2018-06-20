@@ -47,7 +47,7 @@
             // 
             this.btnSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnSave.Enabled = false;
-            this.btnSave.Location = new System.Drawing.Point(173, 27);
+            this.btnSave.Location = new System.Drawing.Point(175, 27);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(60, 20);
             this.btnSave.TabIndex = 16;
@@ -58,7 +58,7 @@
             // 
             this.btnScan.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnScan.Enabled = false;
-            this.btnScan.Location = new System.Drawing.Point(173, 4);
+            this.btnScan.Location = new System.Drawing.Point(175, 4);
             this.btnScan.Name = "btnScan";
             this.btnScan.Size = new System.Drawing.Size(60, 20);
             this.btnScan.TabIndex = 17;
@@ -67,9 +67,9 @@
             // 
             // txtInventoryName
             // 
-            this.txtInventoryName.Location = new System.Drawing.Point(4, 25);
+            this.txtInventoryName.Location = new System.Drawing.Point(4, 26);
             this.txtInventoryName.Name = "txtInventoryName";
-            this.txtInventoryName.Size = new System.Drawing.Size(143, 21);
+            this.txtInventoryName.Size = new System.Drawing.Size(165, 21);
             this.txtInventoryName.TabIndex = 14;
             this.txtInventoryName.Text = "INV";
             this.txtInventoryName.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtTransferNumber_KeyDown);
@@ -84,9 +84,9 @@
             // dgCuonList
             // 
             this.dgCuonList.BackgroundColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(128)))), ((int)(((byte)(128)))));
-            this.dgCuonList.Location = new System.Drawing.Point(4, 98);
+            this.dgCuonList.Location = new System.Drawing.Point(4, 117);
             this.dgCuonList.Name = "dgCuonList";
-            this.dgCuonList.Size = new System.Drawing.Size(232, 170);
+            this.dgCuonList.Size = new System.Drawing.Size(232, 151);
             this.dgCuonList.TabIndex = 15;
             this.dgCuonList.Visible = false;
             this.dgCuonList.Click += new System.EventHandler(this.dgCuonList_Click);
@@ -100,33 +100,33 @@
             // 
             // lblInventoryLocationValue
             // 
-            this.lblInventoryLocationValue.Location = new System.Drawing.Point(87, 52);
+            this.lblInventoryLocationValue.Location = new System.Drawing.Point(6, 69);
             this.lblInventoryLocationValue.Name = "lblInventoryLocationValue";
-            this.lblInventoryLocationValue.Size = new System.Drawing.Size(116, 21);
+            this.lblInventoryLocationValue.Size = new System.Drawing.Size(230, 21);
             // 
             // lblInventoryOfValue
             // 
-            this.lblInventoryOfValue.Location = new System.Drawing.Point(88, 74);
+            this.lblInventoryOfValue.Location = new System.Drawing.Point(83, 92);
             this.lblInventoryOfValue.Name = "lblInventoryOfValue";
-            this.lblInventoryOfValue.Size = new System.Drawing.Size(145, 21);
+            this.lblInventoryOfValue.Size = new System.Drawing.Size(153, 21);
             // 
             // label2
             // 
-            this.label2.Location = new System.Drawing.Point(5, 74);
+            this.label2.Location = new System.Drawing.Point(5, 93);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(77, 21);
             this.label2.Text = "Inventory of:";
             // 
             // lblHiddenFieldValue
             // 
-            this.lblHiddenFieldValue.Location = new System.Drawing.Point(5, 120);
+            this.lblHiddenFieldValue.Location = new System.Drawing.Point(5, 139);
             this.lblHiddenFieldValue.Name = "lblHiddenFieldValue";
-            this.lblHiddenFieldValue.Size = new System.Drawing.Size(228, 21);
+            this.lblHiddenFieldValue.Size = new System.Drawing.Size(231, 21);
             this.lblHiddenFieldValue.Visible = false;
             // 
             // lblHiddenField
             // 
-            this.lblHiddenField.Location = new System.Drawing.Point(5, 98);
+            this.lblHiddenField.Location = new System.Drawing.Point(5, 117);
             this.lblHiddenField.Name = "lblHiddenField";
             this.lblHiddenField.Size = new System.Drawing.Size(142, 21);
             this.lblHiddenField.Text = "Hidden field";

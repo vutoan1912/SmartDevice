@@ -90,7 +90,7 @@ namespace ERP
             catch (Exception ex)
             {
                 ERP.Base.Config.Token = null;
-                MessageBox.Show("Failed to sign in! Please check your credentials and try again!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                MessageBox.Show(ex.Message.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
             }
         }
     }

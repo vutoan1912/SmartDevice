@@ -22,7 +22,10 @@ namespace ERP
         private const string COL_DEL = "delete";
         private const string COL_ID = "pack_id";
         private const string COL_PRODUCT_NAME = "product_name";
-        private const string PREFIX_LOT = "LOT";
+        private const string COL_STATUS = "status";
+        private const string COL_ERROR_CODE = "error_code";
+        private const string COL_TYPE = "type";
+        private const string PREFIX_LOT = "UID";
         private const string PREFIX_PACK = "PACK";
 
         private DataTable dtList = new DataTable();
@@ -46,7 +49,7 @@ namespace ERP
             }
             catch { }
 
-            btnClear.Enabled = false;
+            //btnClear.Enabled = false;
             btnSave.Enabled = false;
             dtList.Rows.Clear();
         }
@@ -65,19 +68,7 @@ namespace ERP
             dtList.Rows.Clear();
 
             //TEST
-            //ScanCode("[)>@06@PKBQLESMX0000019H@3SPACK_00014@@");
-            //ScanCode("[)>@06@PKBQLESMX0000019H@3SLOT00026@@");
-            //ScanCode("[)>@06@PKBQLESMX0000019H@3SLOT00027@@");
-            //ScanCode("[)>@06@PKBQLESMX0000019H@3SPACK_00015@@");
-            //ScanCode("[)>@06@PKBQLESMX0000019H@3SLOT00028@@");
-            //ScanCode("[)>@06@PKBQLESMX0000019H@3SLOT00029@@");
-
-            //ScanCode("[)>@06@P8NF36343000226P4@3SPACK_01949@@");
-            //ScanCode("[)>@06@P8NF36343000226P4@3SLOT11058@@");
-            //ScanCode("[)>@06@P8NF36343000226P4@3SLOT11059@@");
-            //ScanCode("[)>@06@P8NF36343000226P4@3SPACK_01950@@");
-            //ScanCode("[)>@06@P8NF36343000226P4@3SLOT11060@@");
-            //ScanCode("[)>@06@P8NF36343000226P4@3SLOT11061@@");
+            //ScanCode(" PN:KBEFDQV50000058M*SPNK:PART-IMP-17*SDH:VNPT/TECH-BO-04/2017-97*NNK:2017-04-28*ID:0000203252*SL:1000000000*TYPE:1*");
 
             //ScanCode("1256-SA4-3");
         }
@@ -91,6 +82,9 @@ namespace ERP
                 dtList.Columns.Add(COL_PRODUCT_NAME);
                 dtList.Columns.Add(COL_ID);
                 dtList.Columns.Add(COL_DEL);
+                dtList.Columns.Add(COL_STATUS);
+                dtList.Columns.Add(COL_ERROR_CODE);
+                dtList.Columns.Add(COL_TYPE);
 
                 dgCuonList.DataSource = dtList;
                 dgCuonList.TableStyles.Clear();
@@ -104,23 +98,29 @@ namespace ERP
 
                     switch (item.ColumnName)
                     {
-                        case COL_PRODUCT_NAME:
-                            {
-                                tbcName.MappingName = item.ColumnName;
-                                tbcName.HeaderText = "Product Name";
-                                tbcName.Width = 80;
-                            } break;
+                        //case COL_PRODUCT_NAME:
+                        //    {
+                        //        tbcName.MappingName = item.ColumnName;
+                        //        tbcName.HeaderText = "Product";
+                        //        tbcName.Width = 80;
+                        //    } break;
                         case COL_ID:
                             {
                                 tbcName.MappingName = item.ColumnName;
-                                tbcName.HeaderText = "Package";
-                                tbcName.Width = 70;
+                                tbcName.HeaderText = "Package/Unit ID";
+                                tbcName.Width = 100;
                             } break;
                         case COL_DEL:
                             {
                                 tbcName.MappingName = item.ColumnName;
-                                tbcName.HeaderText = "Remove package";
+                                tbcName.HeaderText = "Delete";
                                 tbcName.Width = 50;
+                            } break;
+                        case COL_STATUS:
+                            {
+                                tbcName.MappingName = item.ColumnName;
+                                tbcName.HeaderText = "Status";
+                                tbcName.Width = 55;
                             } break;
                         default:
                             {
@@ -132,7 +132,6 @@ namespace ERP
                 }
 
                 dgCuonList.TableStyles.Add(tableStyle);
-
                 dgCuonList.Refresh();
             }
             catch (Exception ex)
@@ -143,11 +142,9 @@ namespace ERP
 
         private void ScanCode(string dcdData)
         {
-            //Obtain the string and code id.
-            //MessageBox.Show(dcdData);
             if (dcdData.StartsWith("["))
             {
-                #region Scan package/lot
+                #region Scan Package/Unit ID new
                 try
                 {
                     LabelPackage labelPackage = new LabelPackage(dcdData.Trim());
@@ -173,13 +170,13 @@ namespace ERP
                             //    if(dr == null)
                             //        addPackageNotInList(labelPackage.ProductName, labelPackage.PackageId);
                             //}
-                            MessageBox.Show("Package already exists in the list !");
+                            MessageBox.Show("Package already exists in the list !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
                         }
                         else
                         {
                             addPackageToList(labelPackage.ProductName, labelPackage.PackageId);
 
-                            if (BarcodeLocation.Trim().Length > 0 && !btnSave.Enabled)
+                            if (BarcodeLocation !=  null && BarcodeLocation.Trim().Length > 0 && !btnSave.Enabled)
                             {
                                 //enable button save
                                 btnSave.Enabled = true;
@@ -192,7 +189,110 @@ namespace ERP
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Wrong package/lot QRCode format !");
+                    MessageBox.Show("Wrong Package/Unit ID QRCode format !");
+                    //MessageBox.Show(ex.InnerException.ToString());
+                    //MessageBox.Show("Error during loading information !", "Chu y", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                }
+                #endregion
+            }
+            else if (dcdData.Trim().StartsWith("PN:"))
+            {
+                #region Scan Package/Unit ID old
+                try
+                {
+                    TemCuon temCuon = new TemCuon(dcdData.Trim());
+                    DataRow[] rs_package = null;
+
+                    bool _exists_package = false;
+
+                    if (temCuon.IdCuon != null && temCuon.IdCuon != "")
+                    {
+                        rs_package = dtList.Select(COL_ID + " = '" + temCuon.IdCuon + "'");
+                        if (rs_package.Length > 0)
+                        {
+                            _exists_package = true;
+                        }
+
+                        //DialogResult mgb = new DialogResult();
+                        if (_exists_package)
+                        {
+                            //mgb = MessageBox.Show("Package not exists in list !", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                            //if (mgb == DialogResult.Yes)
+                            //{
+                            //    dr = dtList.Select("internalReference = '" + labelPackage.ProductName + "' AND " + COL_ID + " = '" + labelPackage.PackageId + "'").FirstOrDefault();
+                            //    if(dr == null)
+                            //        addPackageNotInList(labelPackage.ProductName, labelPackage.PackageId);
+                            //}
+                            MessageBox.Show("Package already exists in the list !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                        }
+                        else
+                        {
+                            addPackageToList(temCuon.VnptPn, temCuon.IdCuon, Convert.ToInt32(temCuon.Type));
+
+                            if (BarcodeLocation != null && BarcodeLocation.Trim().Length > 0 && !btnSave.Enabled)
+                            {
+                                //enable button save
+                                btnSave.Enabled = true;
+                                btnClear.Enabled = true;
+                            }
+                        }
+                    }
+                    else
+                        MessageBox.Show("Error scan!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Wrong Package/Unit ID QRCode format !");
+                }
+                #endregion
+            }
+            else if (Util.OnlyHexInString(dcdData.Trim()))
+            {
+                #region Scan Serial number
+                try
+                {
+                    string SerialNumber = dcdData.Trim();
+                    DataRow[] rs_package = null;
+                    bool _exists_package = false;
+
+                    if (SerialNumber != null && SerialNumber != "")
+                    {
+                        rs_package = dtList.Select(COL_ID + " = '" + SerialNumber + "'");
+                        if (rs_package.Length > 0)
+                        {
+                            _exists_package = true;
+                        }
+
+                        //DialogResult mgb = new DialogResult();
+                        if (_exists_package)
+                        {
+                            //mgb = MessageBox.Show("Package not exists in list !", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                            //if (mgb == DialogResult.Yes)
+                            //{
+                            //    dr = dtList.Select("internalReference = '" + labelPackage.ProductName + "' AND " + COL_ID + " = '" + labelPackage.PackageId + "'").FirstOrDefault();
+                            //    if(dr == null)
+                            //        addPackageNotInList(labelPackage.ProductName, labelPackage.PackageId);
+                            //}
+                            MessageBox.Show("Package/Serial number already exists in the list !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                        }
+                        else
+                        {
+                            addPackageToList(null, SerialNumber);
+
+                            if (BarcodeLocation != null && BarcodeLocation.Trim().Length > 0 && !btnSave.Enabled)
+                            {
+                                //enable button save
+                                btnSave.Enabled = true;
+                                btnClear.Enabled = true;
+                            }
+                        }
+                    }
+                    else
+                        MessageBox.Show("Error scan!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Wrong Package/Unit ID QRCode format !");
                     //MessageBox.Show(ex.InnerException.ToString());
                     //MessageBox.Show("Error during loading information !", "Chu y", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
                 }
@@ -239,18 +339,6 @@ namespace ERP
                         MessageBox.Show("Error during load location information !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
                     }
                 }
-
-
-                //try
-                //{
-                //    BarcodeLocation = dcdData;
-                //    string[] split = dcdData.Split('-');
-                //    this.lblLocationBarcode.Text = dcdData.Substring(split[0].Length + 1, dcdData.Length - (split[0].Length + 1));
-                //}
-                //catch (Exception ex)
-                //{
-                //    MessageBox.Show("Wrong location barcode format !");
-                //}
                 #endregion
             }
         }
@@ -266,28 +354,18 @@ namespace ERP
                 {
                     string url = "smart-devices/update-locations";
 
-                    //[
-                    //  {
-                    //    "locationCode": "string",
-                    //    "lotNumber": "string",
-                    //    "packageNumber": "string"
-                    //  }
-                    //]
-
                     string param = "[";
                     foreach (DataRow row in dtList.Rows)
                     {
                         param += "{";
                         if (BarcodeLocation != null && BarcodeLocation.Length > 0) param += "\"locationCode\": \"" + BarcodeLocation + "\", ";
-                        if (row[COL_ID].ToString().StartsWith(PREFIX_LOT))
+                        if (Util.getTypePackage(row[COL_ID].ToString().Trim(), row[COL_TYPE].ToString()) % 2 == 0)
                         {
                             param += "\"lotNumber\": \"" + row[COL_ID] + "\"";
-                            //param += "\"packageNumber\": null";
                         }
                         else
                         {
                             param += "\"packageNumber\": \"" + row[COL_ID] + "\"";
-                            //param += "\"lotNumber\": null";
                         }
                         param += "}, ";
                     }
@@ -297,17 +375,48 @@ namespace ERP
 
                     param = param.Replace(System.Environment.NewLine, "").Trim();
 
+                    //Util.Logs(param);
+
                     res = HTTP.PostJson(url, param);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Error during save !", "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
+                    MessageBox.Show(ex.Message.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation, MessageBoxDefaultButton.Button1);
                     //MessageBox.Show(ex.InnerException.ToString());
                 }
 
                 if (res.Status)
                 {
-                    MessageBox.Show("Update location success !");
+                    try
+                    {
+                        List<LocationUpdate> RootObject = JsonConvert.DeserializeObject<List<LocationUpdate>>(res.RawText, new JsonSerializerSettings
+                        {
+                            NullValueHandling = NullValueHandling.Ignore
+                        });
+
+                        List<LocationUpdate> ListDetail = RootObject as List<LocationUpdate>;
+                        //dtList.Rows.Clear();
+
+                        foreach (LocationUpdate item in ListDetail)
+                        {
+                            string packIdResponse = item.lotNumber != null && item.lotNumber.Length > 0 ? item.lotNumber : item.packageNumber;
+                            DataRow[] rs_package = dtList.Select(COL_ID + " = '" + packIdResponse.Trim() + "'");
+                            if (rs_package.Length > 0)
+                            {
+                                rs_package[0][COL_STATUS] = item.errorCode != null && item.errorCode.Length > 0 ? "error" : "";
+                                rs_package[0][COL_ERROR_CODE] = item.errorCode != null && item.errorCode.Length > 0 ? item.errorCode : "";
+                            }
+                        }
+
+                        this.dtList.DefaultView.Sort = COL_STATUS + " DESC";
+                        this.dtList = this.dtList.DefaultView.ToTable();
+
+                        this.dgCuonList.DataSource = this.dtList;
+                        this.dgCuonList.Refresh();
+                    }
+                    catch { }
+
+                    MessageBox.Show("Update location done !");
                 }
                 else
                 {
@@ -316,8 +425,6 @@ namespace ERP
 
                 btnSave.Enabled = false;
                 btnClear.Enabled = true;
-                this.dtList.Rows.Clear();
-                this.dgCuonList.Refresh();
                 
             }
             else
@@ -343,12 +450,36 @@ namespace ERP
                 //else
                 //    dr["destPackageNumber"] = _packageId;
                 //dr["internalReference"] = _productName;
-                dr[COL_DEL] = "Delete";
+                dr[COL_DEL] = "X";
+                dr[COL_STATUS] = "";
+                dr[COL_ERROR_CODE] = "";
+                dr[COL_TYPE] = null;
                 this.dtList.Rows.Add(dr);
                 this.dgCuonList.DataSource = this.dtList;
                 this.dgCuonList.Refresh();
             }
             catch(Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+        }
+
+        private void addPackageToList(string _productName, string _packageId, int _type)
+        {
+            try
+            {
+                DataRow dr = this.dtList.NewRow();
+                dr[COL_ID] = _packageId;
+                dr[COL_PRODUCT_NAME] = _productName;
+                dr[COL_DEL] = "X";
+                dr[COL_STATUS] = "";
+                dr[COL_ERROR_CODE] = "";
+                dr[COL_TYPE] = _type;
+                this.dtList.Rows.Add(dr);
+                this.dgCuonList.DataSource = this.dtList;
+                this.dgCuonList.Refresh();
+            }
+            catch (Exception ex)
             {
                 MessageBox.Show(ex.ToString());
             }
@@ -384,6 +515,10 @@ namespace ERP
                 {
                     dtList.Rows[row.RowNumber].Delete();
                     dgCuonList.Refresh();
+                }else if(row.ColumnNumber == 3)
+                {
+                    if(dtList.Rows[row.RowNumber][COL_ERROR_CODE].ToString().Length > 0)
+                        MessageBox.Show(dtList.Rows[row.RowNumber][COL_ERROR_CODE].ToString());
                 }
             }
             catch { }

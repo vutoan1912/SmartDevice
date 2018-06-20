@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace ERP
 {
@@ -21,5 +22,36 @@ namespace ERP
         public string displayName { get; set; }
         public bool scrapLocation { get; set; }
         public bool returnedLocation { get; set; }
+    }
+
+    public class LocationUpdate
+    {
+        public string errorCode { get; set; }
+        public string locationCode { get; set; }
+        public string lotNumber { get; set; }
+        public string packageNumber { get; set; }
+    }
+
+    class LocationBusiness
+    {
+        public static LocationInfo getInfo(int locationId)
+        {
+            ApiResponse res = new ApiResponse();
+            res.Status = false;
+            string url = "locations/" + locationId.ToString();
+            res = HTTP.GetJson(url);
+            if (res.Status && Util.IsJson(res.RawText))
+            {
+                LocationInfo RootObject = JsonConvert.DeserializeObject<LocationInfo>(res.RawText, new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore
+                });
+                return RootObject;
+            }
+            else
+            {
+                return null;
+            }
+        }
     }
 }
